@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import type { PreparePlayerMoveData } from '@/types';
 import { useAccount, useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
+import { useEffect } from 'react';
 import {
   CheckCircle,
   ExternalLink,
@@ -108,15 +109,18 @@ export function PlayerMoveTransactionHandler({
 
   const StatusIcon = getStatusIcon();
 
-  // Handle completion
-  if (isConfirmed && transactionHash) {
-    onComplete(transactionHash);
-  }
+  // Handle completion and errors with useEffect to prevent infinite re-renders
+  useEffect(() => {
+    if (isConfirmed && transactionHash) {
+      onComplete(transactionHash);
+    }
+  }, [isConfirmed, transactionHash, onComplete]);
 
-  // Handle errors
-  if (writeError) {
-    onError(writeError.message);
-  }
+  useEffect(() => {
+    if (writeError) {
+      onError(writeError.message);
+    }
+  }, [writeError, onError]);
 
   return (
     <Card className="w-full max-w-md">

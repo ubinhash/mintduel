@@ -175,10 +175,6 @@ export const schema = {
   moveType: z
     .enum(['COMMIT', 'REVEAL'])
     .describe('Whether to commit a new move or reveal a previous commit'),
-  secret: z
-    .string()
-    .optional()
-    .describe('The secret for reveal (required for REVEAL, auto-generated for COMMIT)'),
 };
 
 export const metadata = {
@@ -198,7 +194,7 @@ export const metadata = {
 
 export default async function agentMove(input: InferSchema<typeof schema>) {
   try {
-    const { gameId, action, moveType, secret } = input;
+    const { gameId, action, moveType } = input;
 
     // Check if agent private key is available
     const agentPrivateKey = config.agentPrivateKey;
@@ -343,7 +339,7 @@ export default async function agentMove(input: InferSchema<typeof schema>) {
 
     if (moveType === 'COMMIT') {
       // Use fixed secret for testing
-      const moveSecret = secret || '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
+      const moveSecret = '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
       
       // Create commit hash: keccak256(action + secret + round)
       const actionValue = AGENT_ACTIONS[action];
@@ -355,8 +351,8 @@ export default async function agentMove(input: InferSchema<typeof schema>) {
         [actionValue, moveSecret as `0x${string}`, currentRound]
       );
       const commitHash = keccak256(commitData);
-
-      console.log(`Committing - Action: ${action} (${actionValue}), Secret: ${moveSecret}`);
+      console.log(`Committing - Action:  (${actionValue})`);
+      console.log(`Committing - Secret: ${moveSecret}`);
       console.log(`Commit Hash: ${commitHash}`);
 
       // Prepare transaction data
@@ -376,29 +372,17 @@ export default async function agentMove(input: InferSchema<typeof schema>) {
       actionDescription = `Committed move for round ${Number(currentRound)}`;
 
     } else if (moveType === 'REVEAL') {
-      if (!secret) {
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify({
-                error: true,
-                message: 'Secret is required for reveal',
-                instructions: 'Provide the secret that was used in the commit',
-              }),
-            },
-          ],
-        };
-      }
-
+      // Use fixed secret for testing (same as commit)
+      const moveSecret = '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
+      
       const actionValue = AGENT_ACTIONS[action];
-      console.log(`Revealing - Action: ${action} (${actionValue}), Secret: ${secret}`);
+      console.log(`Revealing - Action: ${action} (${actionValue}), Secret: ${moveSecret}`);
 
       // Prepare transaction data
       const transactionData = encodeFunctionData({
         abi: otomDuelAbi,
         functionName: 'reveal',
-        args: [BigInt(gameId), actionValue, secret as `0x${string}`],
+        args: [BigInt(gameId), actionValue, moveSecret as `0x${string}`],
       });
 
       // Send transaction

@@ -130,3 +130,77 @@ export type PrepareMintSVGNFTData = {
     nextSteps: string[];
   };
 };
+
+export type PrepareStartGameData = {
+  success: boolean;
+  transaction: TransactionData;
+  metadata: {
+    contractAddress: string;
+    functionName: string;
+    playerAddress: string;
+    otomIds: string[];
+    otomNames: string[];
+    stakeAmount: string;
+    estimatedGas: string;
+    chainId: number;
+    explorerUrl: string;
+  };
+  instructions: {
+    nextSteps: string[];
+  };
+};
+
+export type PrepareApproveOtomData = {
+  success: boolean;
+  transaction: TransactionData;
+  metadata: {
+    otomContractAddress: string;
+    functionName: string;
+    playerAddress: string;
+    operatorAddress: string;
+    approved: boolean;
+    estimatedGas: string;
+    chainId: number;
+    explorerUrl: string;
+  };
+  instructions: {
+    nextSteps: string[];
+  };
+};
+
+export type PreparePlayerMoveData = {
+  success: boolean;
+  transaction: TransactionData;
+  metadata: {
+    contractAddress: string;
+    functionName: string;
+    playerAddress: string;
+    gameId: string;
+    action: string;
+    actionValue: number;
+    otomIndex: number;
+    otomId: string;
+    otomMass: number;
+    currentRound: number;
+    estimatedGas: string;
+    chainId: number;
+    explorerUrl: string;
+  };
+  gameStatus: {
+    currentRound: number;
+    turnStatus: number;
+    agentHealth: number;
+    accumulatedCharge: number;
+    gameState: number;
+    stakeAmount: number;
+  };
+  otomDetails: {
+    stakedOtomIds: string[];
+    otomMasses: number[];
+    usedOtomIndices: number[];
+    availableOtomIndices: number[];
+  };
+  instructions: {
+    nextSteps: string[];
+  };
+};

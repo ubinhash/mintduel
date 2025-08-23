@@ -6,7 +6,7 @@ import { experimental_createMCPClient, streamText } from 'ai';
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
-  const { messages } = await req.json();
+  const { messages, walletAddress } = await req.json();
 
   const url = new URL(config.mcpServerUrl);
   const mcpClient = await experimental_createMCPClient({
@@ -20,9 +20,16 @@ export async function POST(req: Request) {
     tools,
     messages,
     maxSteps: 5,
-    system: `You are a helpful assistant for Shape Network blockchain data and Web3 operations.
+    system: `You are a helpful assistant for the Otom Duel game. The user's connected wallet address is: ${walletAddress || 'Not connected'}
+
+${walletAddress ? `IMPORTANT: The user's wallet is connected with address: ${walletAddress}. Use this address automatically for all game operations without asking for it.` : 'The user has not connected their wallet yet. Ask them to connect their wallet first.'}
+
+Provide link to https://testnet.otom.xyz/ when asked about otoms since it's the prerequisite for the game. Player may play this game to reduce mint price of NFT.
 
 You have access to multiple tools that can be chained together to provide comprehensive answers:
+- first check if user have active game using their wallet address
+  - if they do, ask user if they want to play the game
+  - if they do not have active game, list their otoms and ask them to select three to play
 - Use multiple tools in sequence when needed to gather all required information
 - For example, get gas prices first, then calculate gasback earnings based on those prices
 - Format your responses using markdown for better readability (bold, lists, code blocks, etc.)

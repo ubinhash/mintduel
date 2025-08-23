@@ -19,10 +19,13 @@ import { StartGameTransactionHandler } from './start-game-transaction-handler';
 import { PlayerMoveTransactionHandler } from './player-move-transaction-handler';
 
 export function ChatInterface() {
-  const { isConnected } = useAccount();
+  const { isConnected, address } = useAccount();
   const { messages, input, handleInputChange, handleSubmit, status, error, setInput } = useChat({
     api: '/api/chat',
     maxSteps: 5, // Allow up to 5 sequential tool calls
+    body: {
+      walletAddress: address,
+    },
   });
 
   const scrollAreaRef = useRef<HTMLDivElement>(null);
