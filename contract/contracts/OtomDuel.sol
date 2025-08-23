@@ -258,7 +258,10 @@ contract OtomDuel is ReentrancyGuard, Ownable, IERC1155Receiver {
         game.agentActions[game.currentRound] = action;
 
         // Calculate round outcome
-        _calculateRoundOutcome(game, game.playerActions[game.currentRound], action, game.otomMasses[game.currentRound]);
+        // Get the OTOM index used in this round and get its mass
+        uint256 otomIndexUsed = game.otomIndices[game.currentRound];
+        uint256 otomMassUsed = game.otomMasses[otomIndexUsed];
+        _calculateRoundOutcome(game, game.playerActions[game.currentRound], action, otomMassUsed);
         
         game.roundCompleted[game.currentRound] = true;
         game.currentRound++;
