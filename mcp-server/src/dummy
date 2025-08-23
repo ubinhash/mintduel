@@ -1,0 +1,82 @@
+// import { z } from 'zod';
+// import { type InferSchema } from 'xmcp';
+// import type { ToolErrorOutput } from '../../types';
+
+// export const schema = {
+//   query: z.string().optional().describe('Optional query parameter for the otom tool'),
+// };
+
+// export const metadata = {
+//   name: 'getOtom',
+//   description: 'Get dummy otom data for testing purposes',
+//   annotations: {
+//     title: 'Get Otom Data',
+//     readOnlyHint: true,
+//     destructiveHint: false,
+//     idempotentHint: true,
+//     requiresWallet: false,
+//     category: 'otom',
+//     educationalHint: true,
+//     cacheTTL: 0, // No caching for dummy tool
+//   },
+// };
+
+// export default async function getOtom({ query }: InferSchema<typeof schema>) {
+//   try {
+//     // Dummy data for otom tool
+//     const result = {
+//       timestamp: new Date().toISOString(),
+//       toolName: 'getOtom',
+//       query: query || 'default',
+//       data: {
+//         otomId: 'otom-12345',
+//         status: 'active',
+//         features: [
+//           'feature-1',
+//           'feature-2',
+//           'feature-3'
+//         ],
+//         metadata: {
+//           version: '1.0.0',
+//           description: 'This is a dummy otom tool for testing',
+//           category: 'otom',
+//           tags: ['dummy', 'test', 'otom']
+//         },
+//         stats: {
+//           totalItems: 42,
+//           activeItems: 38,
+//           inactiveItems: 4
+//         }
+//       },
+//       message: 'Successfully retrieved otom data'
+//     };
+
+//     const response = {
+//       content: [
+//         {
+//           type: 'text',
+//           text: JSON.stringify(result, null, 2),
+//         },
+//       ],
+//     };
+
+//     return response;
+//   } catch (error) {
+//     const errorOutput: ToolErrorOutput = {
+//       error: true,
+//       message: `Error fetching otom data: ${
+//         error instanceof Error ? error.message : 'Unknown error occurred'
+//       }`,
+//       timestamp: new Date().toISOString(),
+//     };
+
+//     return {
+//       content: [
+//         {
+//           type: 'text',
+//           text: JSON.stringify(errorOutput, null, 2),
+//         },
+//       ],
+//     };
+//   }
+// } 
