@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
-import type { PrepareMintSVGNFTData } from '@/types';
+import type { PrepareMintSVGNFTData, PrepareStartGameData, PreparePlayerMoveData } from '@/types';
 import { useChat } from '@ai-sdk/react';
 import { Bot, ChevronDown, ChevronRight, Info, Send, User, Wallet } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -15,6 +15,8 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useAccount } from 'wagmi';
 import { MintTransactionHandler } from './mint-transaction-handler';
+import { StartGameTransactionHandler } from './start-game-transaction-handler';
+import { PlayerMoveTransactionHandler } from './player-move-transaction-handler';
 
 export function ChatInterface() {
   const { isConnected } = useAccount();
@@ -25,7 +27,7 @@ export function ChatInterface() {
 
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const [expandedMessages, setExpandedMessages] = useState<Set<string>>(new Set());
-  const [pendingTransaction, setPendingTransaction] = useState<PrepareMintSVGNFTData | null>(null);
+  const [pendingTransaction, setPendingTransaction] = useState<PrepareMintSVGNFTData | PrepareStartGameData | PreparePlayerMoveData | null>(null);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -50,15 +52,14 @@ export function ChatInterface() {
     for (const message of messages) {
       if (message.role === 'assistant') {
         // First check the message content
-        let transaction = detectTransactionResponse(message.content);
+        let transaction: PrepareMintSVGNFTData | PrepareStartGameData | PreparePlayerMoveData | null = detectTransactionResponse(message.content);
 
         // If not found in content, check tool results
         if (!transaction && message.parts) {
           for (const part of message.parts) {
             if (
               part.type === 'tool-invocation' &&
-              part.toolInvocation.state === 'result' &&
-              part.toolInvocation.toolName === 'prepareMintSVGNFT'
+              part.toolInvocation.state === 'result'
             ) {
               try {
                 const toolResult = part.toolInvocation.result;
@@ -67,10 +68,32 @@ export function ChatInterface() {
                   if (
                     parsed.success &&
                     parsed.transaction &&
-                    parsed.metadata?.functionName === 'mintNFT'
+                    parsed.metadata?.functionName
                   ) {
-                    transaction = parsed as PrepareMintSVGNFTData;
-                    break;
+                    // Check for mint NFT transaction
+                    if (
+                      part.toolInvocation.toolName === 'prepareMintSVGNFT' &&
+                      parsed.metadata.functionName === 'mintNFT'
+                    ) {
+                      transaction = parsed as PrepareMintSVGNFTData;
+                      break;
+                    }
+                    // Check for start game transaction
+                    if (
+                      part.toolInvocation.toolName === 'prepareStartGame' &&
+                      parsed.metadata.functionName === 'startGame'
+                    ) {
+                      transaction = parsed as PrepareStartGameData;
+                      break;
+                    }
+                    // Check for player move transaction
+                    if (
+                      part.toolInvocation.toolName === 'preparePlayerMove' &&
+                      parsed.metadata.functionName === 'playerPlay'
+                    ) {
+                      transaction = parsed as PreparePlayerMoveData;
+                      break;
+                    }
                   }
                 }
               } catch {
@@ -100,28 +123,65 @@ export function ChatInterface() {
     });
   };
 
-  const detectTransactionResponse = (content: string): PrepareMintSVGNFTData | null => {
+  const detectTransactionResponse = (content: string): PrepareMintSVGNFTData | PrepareStartGameData | PreparePlayerMoveData | null => {
     try {
       const parsed = JSON.parse(content);
-      if (parsed.success && parsed.transaction && parsed.metadata?.functionName === 'mintNFT') {
-        return parsed as PrepareMintSVGNFTData;
+      if (parsed.success && parsed.transaction && parsed.metadata?.functionName) {
+        if (parsed.metadata.functionName === 'mintNFT') {
+          return parsed as PrepareMintSVGNFTData;
+        }
+        if (parsed.metadata.functionName === 'startGame') {
+          return parsed as PrepareStartGameData;
+        }
+        if (parsed.metadata.functionName === 'playerPlay') {
+          return parsed as PreparePlayerMoveData;
+        }
       }
     } catch {
       const jsonBlockRegex = /```json\s*([\s\S]*?)\s*```/;
       const match = content.match(jsonBlockRegex);
       if (match) {
         const parsed = JSON.parse(match[1]);
+        if (parsed.success && parsed.transaction && parsed.metadata?.functionName) {
+          if (parsed.metadata.functionName === 'mintNFT') {
+            return parsed as PrepareMintSVGNFTData;
+          }
+          if (parsed.metadata.functionName === 'startGame') {
+            return parsed as PrepareStartGameData;
+          }
+          if (parsed.metadata.functionName === 'playerPlay') {
+            return parsed as PreparePlayerMoveData;
+          }
+        }
+      }
+      // Check for mint NFT pattern
+      const mintJsonRegex =
+        /\{[\s\S]*"success"\s*:\s*true[\s\S]*"transaction"[\s\S]*"mintNFT"[\s\S]*\}/;
+      const mintJsonMatch = content.match(mintJsonRegex);
+      if (mintJsonMatch) {
+        const parsed = JSON.parse(mintJsonMatch[0]);
         if (parsed.success && parsed.transaction && parsed.metadata?.functionName === 'mintNFT') {
           return parsed as PrepareMintSVGNFTData;
         }
       }
-      const jsonRegex =
-        /\{[\s\S]*"success"\s*:\s*true[\s\S]*"transaction"[\s\S]*"mintNFT"[\s\S]*\}/;
-      const jsonMatch = content.match(jsonRegex);
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
-        if (parsed.success && parsed.transaction && parsed.metadata?.functionName === 'mintNFT') {
-          return parsed as PrepareMintSVGNFTData;
+      // Check for start game pattern
+      const startGameJsonRegex =
+        /\{[\s\S]*"success"\s*:\s*true[\s\S]*"transaction"[\s\S]*"startGame"[\s\S]*\}/;
+      const startGameJsonMatch = content.match(startGameJsonRegex);
+      if (startGameJsonMatch) {
+        const parsed = JSON.parse(startGameJsonMatch[0]);
+        if (parsed.success && parsed.transaction && parsed.metadata?.functionName === 'startGame') {
+          return parsed as PrepareStartGameData;
+        }
+      }
+      // Check for player move pattern
+      const playerMoveJsonRegex =
+        /\{[\s\S]*"success"\s*:\s*true[\s\S]*"transaction"[\s\S]*"playerPlay"[\s\S]*\}/;
+      const playerMoveJsonMatch = content.match(playerMoveJsonRegex);
+      if (playerMoveJsonMatch) {
+        const parsed = JSON.parse(playerMoveJsonMatch[0]);
+        if (parsed.success && parsed.transaction && parsed.metadata?.functionName === 'playerPlay') {
+          return parsed as PreparePlayerMoveData;
         }
       }
     }
@@ -189,7 +249,7 @@ export function ChatInterface() {
 
                   {messages.map((message) => {
                     // Check if this message contains a transaction response
-                    let transaction: PrepareMintSVGNFTData | null = null;
+                    let transaction: PrepareMintSVGNFTData | PrepareStartGameData | PreparePlayerMoveData | null = null;
 
                     if (message.role === 'assistant') {
                       // First check the message content
@@ -200,8 +260,7 @@ export function ChatInterface() {
                         for (const part of message.parts) {
                           if (
                             part.type === 'tool-invocation' &&
-                            part.toolInvocation.state === 'result' &&
-                            part.toolInvocation.toolName === 'prepareMintSVGNFT'
+                            part.toolInvocation.state === 'result'
                           ) {
                             try {
                               const toolResult = part.toolInvocation.result;
@@ -210,10 +269,32 @@ export function ChatInterface() {
                                 if (
                                   parsed.success &&
                                   parsed.transaction &&
-                                  parsed.metadata?.functionName === 'mintNFT'
+                                  parsed.metadata?.functionName
                                 ) {
-                                  transaction = parsed as PrepareMintSVGNFTData;
-                                  break;
+                                  // Check for mint NFT transaction
+                                  if (
+                                    part.toolInvocation.toolName === 'prepareMintSVGNFT' &&
+                                    parsed.metadata.functionName === 'mintNFT'
+                                  ) {
+                                    transaction = parsed as PrepareMintSVGNFTData;
+                                    break;
+                                  }
+                                  // Check for start game transaction
+                                  if (
+                                    part.toolInvocation.toolName === 'prepareStartGame' &&
+                                    parsed.metadata.functionName === 'startGame'
+                                  ) {
+                                    transaction = parsed as PrepareStartGameData;
+                                    break;
+                                  }
+                                  // Check for player move transaction
+                                  if (
+                                    part.toolInvocation.toolName === 'preparePlayerMove' &&
+                                    parsed.metadata.functionName === 'playerPlay'
+                                  ) {
+                                    transaction = parsed as PreparePlayerMoveData;
+                                    break;
+                                  }
                                 }
                               }
                             } catch {
@@ -337,11 +418,25 @@ export function ChatInterface() {
                   {/* Display transaction handler if there's a pending transaction */}
                   {pendingTransaction && (
                     <div className="mt-4">
-                      <MintTransactionHandler
-                        transaction={pendingTransaction}
-                        onComplete={handleTransactionComplete}
-                        onError={handleTransactionError}
-                      />
+                      {'metadata' in pendingTransaction && pendingTransaction.metadata.functionName === 'mintNFT' ? (
+                        <MintTransactionHandler
+                          transaction={pendingTransaction as PrepareMintSVGNFTData}
+                          onComplete={handleTransactionComplete}
+                          onError={handleTransactionError}
+                        />
+                      ) : pendingTransaction.metadata.functionName === 'startGame' ? (
+                        <StartGameTransactionHandler
+                          transaction={pendingTransaction as PrepareStartGameData}
+                          onComplete={handleTransactionComplete}
+                          onError={handleTransactionError}
+                        />
+                      ) : (
+                        <PlayerMoveTransactionHandler
+                          transaction={pendingTransaction as PreparePlayerMoveData}
+                          onComplete={handleTransactionComplete}
+                          onError={handleTransactionError}
+                        />
+                      )}
                     </div>
                   )}
 

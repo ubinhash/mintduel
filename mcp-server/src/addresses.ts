@@ -14,4 +14,12 @@ export const addresses: Record<string, Record<number, Address>> = {
     [shapeSepolia.id]: '0xf8C93f671e24A60f4c11612b2DFAC3DD83F41340',
     [shape.id]: zeroAddress, // Replace with actual address when deployed to mainnet
   },
+  otomDuel: {
+    [shapeSepolia.id]: '0x2AbEd5C47E391BB8BD57f382B9A154336c728438',
+    [shape.id]: zeroAddress, // Replace with actual address when deployed to mainnet
+  },
+  otom: {
+    [shapeSepolia.id]: '0xc709F59f1356230025d4fdFDCeD92341A14FF2F8',
+    [shape.id]: '0x2f9810789aebBB6cdC6c0332948fF3B6D11121E3', // Replace with actual address when deployed to mainnet
+  },
 };

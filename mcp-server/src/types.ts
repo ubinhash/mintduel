@@ -114,6 +114,43 @@ export type PrepareMintSVGNFTOutput = {
   };
 };
 
+export type PrepareStartGameOutput = {
+  success: boolean;
+  transaction: TransactionData;
+  metadata: {
+    contractAddress: Address;
+    functionName: string;
+    playerAddress: Address;
+    otomIds: string[];
+    otomNames: string[];
+    stakeAmount: string;
+    estimatedGas: string;
+    chainId: number;
+    explorerUrl: string;
+  };
+  instructions: {
+    nextSteps: string[];
+  };
+};
+
+export type PrepareApproveOtomOutput = {
+  success: boolean;
+  transaction: TransactionData;
+  metadata: {
+    otomContractAddress: Address;
+    functionName: string;
+    playerAddress: Address;
+    operatorAddress: Address;
+    approved: boolean;
+    estimatedGas: string;
+    chainId: number;
+    explorerUrl: string;
+  };
+  instructions: {
+    nextSteps: string[];
+  };
+};
+
 export type NormalizedMarketStats = {
   floorPrice: number | null;
   totalVolume: number | null;

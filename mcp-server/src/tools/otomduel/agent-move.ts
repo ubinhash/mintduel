@@ -348,11 +348,12 @@ export default async function agentMove(input: InferSchema<typeof schema>) {
       // Create commit hash: keccak256(action + secret + round)
       const actionValue = AGENT_ACTIONS[action];
       // Use the same packing method as the contract: keccak256(abi.encodePacked(action, secret, round))
-      // Replicate abi.encodePacked by concatenating the raw bytes
-      const actionBytes = toHex(actionValue).slice(2).padStart(64, '0'); // 32 bytes for uint8
-      const secretBytes = moveSecret.slice(2); // 32 bytes for bytes32
-      const roundBytes = toHex(currentRound).slice(2).padStart(64, '0'); // 32 bytes for uint256
-      const commitData = ('0x' + actionBytes + secretBytes + roundBytes) as `0x${string}`;
+      // Use encodePacked to replicate solidityPacked
+      const { encodePacked } = await import('viem');
+      const commitData = encodePacked(
+        ['uint8', 'bytes32', 'uint256'],
+        [actionValue, moveSecret as `0x${string}`, currentRound]
+      );
       const commitHash = keccak256(commitData);
 
       console.log(`Committing - Action: ${action} (${actionValue}), Secret: ${moveSecret}`);

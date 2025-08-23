@@ -16,6 +16,7 @@ export const config = {
   isMainnet: Number(process.env.CHAIN_ID) === shape.id,
   redisUrl: process.env.REDIS_URL as string,
   agentPrivateKey: process.env.AGENT_PRIVATE_KEY as string,
+  agentAddress: process.env.AGENT_ADDRESS as string,
   defaultRpcUrl:
     Number(process.env.CHAIN_ID) === shape.id
       ? 'https://mainnet.shape.network'
