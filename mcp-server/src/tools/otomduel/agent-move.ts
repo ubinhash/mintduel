@@ -182,40 +182,7 @@ const otomDuelAbi = [
     stateMutability: "view",
     type: "function"
   },
-  {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "gameId",
-        type: "uint256"
-      },
-      {
-        internalType: "uint256",
-        name: "round",
-        type: "uint256"
-      },
-      {
-        internalType: "enum OtomDuel.AgentAction",
-        name: "action",
-        type: "uint8"
-      },
-      {
-        internalType: "bytes32",
-        name: "secret",
-        type: "bytes32"
-      }
-    ],
-    name: "validReveal",
-    outputs: [
-      {
-        internalType: "bool",
-        name: "",
-        type: "bool"
-      }
-    ],
-    stateMutability: "view",
-    type: "function"
-  },
+
   {
     inputs: [
       {
@@ -477,21 +444,36 @@ export default async function agentMove(input: InferSchema<typeof schema>) {
       // Use fixed secret for testing
       const moveSecret = '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
       
-      // Find the correct action by enumerating all possibilities
+      // Get the commit hash from the contract
+      console.log('Getting commit hash from contract...');
+      const commitHash = await publicClient.readContract({
+        address: contractAddress as `0x${string}`,
+        abi: otomDuelAbi,
+        functionName: 'getCommitHash',
+        args: [BigInt(gameId), BigInt(currentRound)],
+      });
+      
+      console.log(`Commit hash from contract: ${commitHash}`);
+      
+      // Find the correct action by computing commit hashes and comparing
       console.log('Finding correct action for reveal...');
       const actions = ['DEFEND', 'FLIP_CHARGE', 'RECOVER'] as const;
       let correctAction: string | null = null;
       
       for (const testAction of actions) {
         const actionValue = AGENT_ACTIONS[testAction as keyof typeof AGENT_ACTIONS];
-        const isValid = await publicClient.readContract({
-          address: contractAddress as `0x${string}`,
-          abi: otomDuelAbi,
-          functionName: 'validReveal',
-          args: [BigInt(gameId), BigInt(currentRound), actionValue, moveSecret as `0x${string}`],
-        });
         
-        if (isValid) {
+        // Compute the commit hash using the same method as in COMMIT
+        const { encodePacked } = await import('viem');
+        const commitData = encodePacked(
+          ['uint8', 'bytes32', 'uint256'],
+          [actionValue, moveSecret as `0x${string}`, currentRound]
+        );
+        const computedHash = keccak256(commitData);
+        
+        console.log(`Testing action ${testAction} (${actionValue}) - Computed hash: ${computedHash}`);
+        
+        if (computedHash === commitHash) {
           correctAction = testAction;
           console.log(`Found correct action: ${correctAction}`);
           break;
@@ -602,8 +584,8 @@ export default async function agentMove(input: InferSchema<typeof schema>) {
           ]
         : [
             'Agent move revealed successfully!',
-            'Next: If game is not complete, agent should call agentMove() for next round',
-            'Note: Wait a few seconds for blockchain confirmation before next move'
+            'Next: If game is not complete,you should remind agent to call agentMove() for next round',
+            'Note: feel free to chat with agent to influence the action'
           ],
     };
 

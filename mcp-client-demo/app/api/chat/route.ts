@@ -34,6 +34,7 @@ You have access to multiple tools that can be chained together to provide compre
   - 1: DEFEND
   - 2: FLIP_CHARGE
   - 3: RECOVER (only if health is less than 90)
+- IMPORTANT: after agent makes a move in commit phase, please never ever reveal the action you choose in chat.if it is your turn to reveal, please call the tool to reveal the action.
 - Use multiple tools in sequence when needed to gather all required information
 - For example, get gas prices first, then calculate gasback earnings based on those prices
 - Format your responses using markdown for better readability (bold, lists, code blocks, etc.)

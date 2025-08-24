@@ -78,9 +78,6 @@ export function ChatInterface() {
         if (parsed.metadata.functionName === 'claimRefund') {
           return parsed as PrepareClaimRefundData;
         }
-        if (parsed.metadata.functionName === 'claimRefund') {
-          return parsed as PrepareClaimRefundData;
-        }
       }
     } catch {
       const jsonBlockRegex = /```json\s*([\s\S]*?)\s*```/;
@@ -96,6 +93,9 @@ export function ChatInterface() {
           }
           if (parsed.metadata.functionName === 'playerPlay') {
             return parsed as PreparePlayerMoveData;
+          }
+          if (parsed.metadata.functionName === 'claimRefund') {
+            return parsed as PrepareClaimRefundData;
           }
         }
       }
@@ -127,6 +127,16 @@ export function ChatInterface() {
         const parsed = JSON.parse(playerMoveJsonMatch[0]);
         if (parsed.success && parsed.transaction && parsed.metadata?.functionName === 'playerPlay') {
           return parsed as PreparePlayerMoveData;
+        }
+      }
+      // Check for claim refund pattern
+      const claimRefundJsonRegex =
+        /\{[\s\S]*"success"\s*:\s*true[\s\S]*"transaction"[\s\S]*"claimRefund"[\s\S]*\}/;
+      const claimRefundJsonMatch = content.match(claimRefundJsonRegex);
+      if (claimRefundJsonMatch) {
+        const parsed = JSON.parse(claimRefundJsonMatch[0]);
+        if (parsed.success && parsed.transaction && parsed.metadata?.functionName === 'claimRefund') {
+          return parsed as PrepareClaimRefundData;
         }
       }
     }
@@ -236,6 +246,14 @@ export function ChatInterface() {
                                     parsed.metadata.functionName === 'playerPlay'
                                   ) {
                                     transaction = parsed as PreparePlayerMoveData;
+                                    break;
+                                  }
+                                  // Check for claim refund transaction
+                                  if (
+                                    part.toolInvocation.toolName === 'prepareClaimRefund' &&
+                                    parsed.metadata.functionName === 'claimRefund'
+                                  ) {
+                                    transaction = parsed as PrepareClaimRefundData;
                                     break;
                                   }
                                 }
