@@ -168,7 +168,16 @@ export function ChatInterface() {
           <div className="rounded-lg bg-background/50 p-4 text-center">
             <h4 className="font-semibold text-primary mb-3">Simply talk to the AI agent below to begin your duel!</h4>
             <p className="text-sm text-muted-foreground mb-3">
-              Connect your wallet with Universe Alpha OTOM NFTs and start battling for mint discounts
+              Connect your wallet with{' '}
+              <a 
+                href="https://testnet.otom.xyz/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="underline text-primary hover:text-primary/80"
+              >
+                Universe Alpha OTOM NFTs
+              </a>
+              {' '}and start battling for mint discounts
             </p>
             <p className="text-sm text-muted-foreground mb-3">
               Stake & Equip OTOMs → Play 3 Rounds → Mint NFT & Claim Price Difference
