@@ -1,13 +1,14 @@
 const { ethers, run } = require("hardhat");
-
+const { config } = require("./config");
 async function main() {
   console.log("🚀 Deploying SampleNFT to Shape Sepolia...");
 
   const [deployer] = await ethers.getSigners();
   console.log("📋 Deploying from account:", deployer.address);
 
+
   // OTOM_DUEL_ADDRESS from the addresses.ts file
-  const OTOM_DUEL_ADDRESS = "0x2AbEd5C47E391BB8BD57f382B9A154336c728438";
+  const OTOM_DUEL_ADDRESS = config.OTOM_DUEL_ADDRESS;
 
   // Deploy SampleNFT contract
   const SampleNFT = await ethers.getContractFactory("SampleNFT");

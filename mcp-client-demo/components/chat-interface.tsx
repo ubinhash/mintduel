@@ -31,7 +31,6 @@ export function ChatInterface() {
 
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const [expandedMessages, setExpandedMessages] = useState<Set<string>>(new Set());
-  const [pendingTransaction, setPendingTransaction] = useState<PrepareMintSVGNFTData | PrepareStartGameData | PreparePlayerMoveData | PrepareClaimRefundData | null>(null);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -49,79 +48,7 @@ export function ChatInterface() {
     return () => clearTimeout(timeoutId);
   }, [messages.length]);
 
-  // Detect transaction responses in messages
-  useEffect(() => {
-    if (pendingTransaction) return; // Don't override existing pending transaction
 
-    for (const message of messages) {
-      if (message.role === 'assistant') {
-        // First check the message content
-        let transaction: PrepareMintSVGNFTData | PrepareStartGameData | PreparePlayerMoveData | PrepareClaimRefundData | null = detectTransactionResponse(message.content);
-
-        // If not found in content, check tool results
-        if (!transaction && message.parts) {
-          for (const part of message.parts) {
-            if (
-              part.type === 'tool-invocation' &&
-              part.toolInvocation.state === 'result'
-            ) {
-              try {
-                const toolResult = part.toolInvocation.result;
-                if (toolResult?.content?.[0]?.text) {
-                  const parsed = JSON.parse(toolResult.content[0].text);
-                  if (
-                    parsed.success &&
-                    parsed.transaction &&
-                    parsed.metadata?.functionName
-                  ) {
-                    // Check for mint NFT transaction
-                    if (
-                      part.toolInvocation.toolName === 'prepareMintSVGNFT' &&
-                      parsed.metadata.functionName === 'mintNFT'
-                    ) {
-                      transaction = parsed as PrepareMintSVGNFTData;
-                      break;
-                    }
-                    // Check for start game transaction
-                    if (
-                      part.toolInvocation.toolName === 'prepareStartGame' &&
-                      parsed.metadata.functionName === 'startGame'
-                    ) {
-                      transaction = parsed as PrepareStartGameData;
-                      break;
-                    }
-                    // Check for player move transaction
-                    if (
-                      part.toolInvocation.toolName === 'preparePlayerMove' &&
-                      parsed.metadata.functionName === 'playerPlay'
-                    ) {
-                      transaction = parsed as PreparePlayerMoveData;
-                      break;
-                    }
-                    // Check for claim refund transaction
-                    if (
-                      part.toolInvocation.toolName === 'prepareClaimRefund' &&
-                      parsed.metadata.functionName === 'claimRefund'
-                    ) {
-                      transaction = parsed as PrepareClaimRefundData;
-                      break;
-                    }
-                  }
-                }
-              } catch {
-                // Ignore parsing errors
-              }
-            }
-          }
-        }
-
-        if (transaction) {
-          setPendingTransaction(transaction);
-          break; // Only set the first transaction found
-        }
-      }
-    }
-  }, [messages, pendingTransaction]);
 
   const toggleMessageExpansion = (messageId: string) => {
     setExpandedMessages((prev) => {
@@ -208,12 +135,10 @@ export function ChatInterface() {
 
   const handleTransactionComplete = useCallback((hash: string) => {
     console.log('Transaction completed:', hash);
-    setPendingTransaction(null);
   }, []);
 
   const handleTransactionError = useCallback((error: string) => {
     console.error('Transaction failed:', error);
-    setPendingTransaction(null);
   }, []);
 
   return (
@@ -323,11 +248,6 @@ export function ChatInterface() {
                       }
                     }
 
-                    // If we detect a transaction, set it as pending
-                    if (transaction && !pendingTransaction) {
-                      setPendingTransaction(transaction);
-                    }
-
                     return (
                       <div key={message.id} className="space-y-2">
                         <div
@@ -429,40 +349,42 @@ export function ChatInterface() {
                             </div>
                           )}
                         </div>
+                        
+                        {/* Render transaction handler inline with the message if it contains a transaction */}
+                        {transaction && (
+                          <div className="mt-3 ml-11">
+                            {'metadata' in transaction && transaction.metadata.functionName === 'mintNFT' ? (
+                              <MintTransactionHandler
+                                transaction={transaction as PrepareMintSVGNFTData}
+                                onComplete={handleTransactionComplete}
+                                onError={handleTransactionError}
+                              />
+                            ) : transaction.metadata.functionName === 'startGame' ? (
+                              <StartGameTransactionHandler
+                                transaction={transaction as PrepareStartGameData}
+                                onComplete={handleTransactionComplete}
+                                onError={handleTransactionError}
+                              />
+                            ) : transaction.metadata.functionName === 'claimRefund' ? (
+                              <ClaimRefundTransactionHandler
+                                transaction={transaction as PrepareClaimRefundData}
+                                onComplete={handleTransactionComplete}
+                                onError={handleTransactionError}
+                              />
+                            ) : (
+                              <PlayerMoveTransactionHandler
+                                transaction={transaction as PreparePlayerMoveData}
+                                onComplete={handleTransactionComplete}
+                                onError={handleTransactionError}
+                              />
+                            )}
+                          </div>
+                        )}
                       </div>
                     );
                   })}
 
-                  {/* Display transaction handler if there's a pending transaction */}
-                  {pendingTransaction && (
-                    <div className="mt-4">
-                      {'metadata' in pendingTransaction && pendingTransaction.metadata.functionName === 'mintNFT' ? (
-                        <MintTransactionHandler
-                          transaction={pendingTransaction as PrepareMintSVGNFTData}
-                          onComplete={handleTransactionComplete}
-                          onError={handleTransactionError}
-                        />
-                      ) : pendingTransaction.metadata.functionName === 'startGame' ? (
-                        <StartGameTransactionHandler
-                          transaction={pendingTransaction as PrepareStartGameData}
-                          onComplete={handleTransactionComplete}
-                          onError={handleTransactionError}
-                        />
-                      ) : pendingTransaction.metadata.functionName === 'claimRefund' ? (
-                        <ClaimRefundTransactionHandler
-                          transaction={pendingTransaction as PrepareClaimRefundData}
-                          onComplete={handleTransactionComplete}
-                          onError={handleTransactionError}
-                        />
-                      ) : (
-                        <PlayerMoveTransactionHandler
-                          transaction={pendingTransaction as PreparePlayerMoveData}
-                          onComplete={handleTransactionComplete}
-                          onError={handleTransactionError}
-                        />
-                      )}
-                    </div>
-                  )}
+
 
                   {(status === 'submitted' || status === 'streaming') && (
                     <div className="flex items-start gap-3">
