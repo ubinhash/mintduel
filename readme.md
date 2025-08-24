@@ -8,6 +8,10 @@ https://testnet.otom.xyz/
 
 mine three universe alpha otom on testnet, please make sure you are mining from alpha not bohr!
 
+## Deployment
+
+https://mintduel-client.vercel.app/
+
 
 ## Overview  
 **MintDuel** introduces a new paradigm in NFT minting:  

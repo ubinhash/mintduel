@@ -9,7 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import type { PrepareMintSVGNFTData, PrepareStartGameData, PreparePlayerMoveData, PrepareClaimRefundData } from '@/types';
 import { useChat } from '@ai-sdk/react';
-import { Bot, ChevronDown, ChevronRight, Info, Send, User, Wallet } from 'lucide-react';
+import { Bot, ChevronDown, ChevronRight, Info, Send, User, Wallet, Sword, Shield, Zap, RotateCcw, Heart } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -18,6 +18,7 @@ import { MintTransactionHandler } from './mint-transaction-handler';
 import { StartGameTransactionHandler } from './start-game-transaction-handler';
 import { PlayerMoveTransactionHandler } from './player-move-transaction-handler';
 import { ClaimRefundTransactionHandler } from './claim-refund-transaction-handler';
+import { GameStatusDisplay } from './game-status-display';
 
 export function ChatInterface() {
   const { isConnected, address } = useAccount();
@@ -153,13 +154,72 @@ export function ChatInterface() {
 
   return (
     <div className="flex flex-col gap-4">
-      <Alert>
-        <Info className="h-4 w-4" />
-        <AlertDescription>
-          <strong>Demo Mode (rate limited):</strong> Click on assistant responses that used tools to
-          expand and view the tool calls and raw responses.
-        </AlertDescription>
-      </Alert>
+      {/* Project Description */}
+      <Card className="w-full border-2 border-primary/20 bg-gradient-to-r from-primary/5 to-secondary/5">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2 text-2xl font-bold text-primary">
+            <Sword className="h-6 w-6" />
+            MintDuel 
+            <span className="text-lg font-normal text-muted-foreground">- Agent-Driven Mint Pricing</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* How to Start */}
+          <div className="rounded-lg bg-background/50 p-4 text-center">
+            <h4 className="font-semibold text-primary mb-3">Simply talk to the AI agent below to begin your duel!</h4>
+            <p className="text-sm text-muted-foreground mb-3">
+              Connect your wallet with Universe Alpha OTOM NFTs and start battling for mint discounts
+            </p>
+            <p className="text-xs">
+              <span className="text-red-500">100 health → Full price</span> | 
+              <span className="text-yellow-500"> 30 health → 30% price</span> | 
+              <span className="text-green-500"> 0 health → Free mint</span>
+            </p>
+          </div>
+
+          {/* Actions */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="rounded-lg bg-background/50 p-4">
+              <h4 className="font-semibold text-primary mb-2"> Player Actions</h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center gap-2">
+                  <Shield className="h-4 w-4 text-blue-500" />
+                  <span><strong>Attack (OTOM):</strong> Deal damage = OTOM mass value</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Zap className="h-4 w-4 text-yellow-500" />
+                  <span><strong>Charge (OTOM):</strong> Boost next attack by OTOM mass value</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-lg bg-background/50 p-4">
+              <h4 className="font-semibold text-primary mb-2"> AI Agent Actions</h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center gap-2">
+                  <RotateCcw className="h-4 w-4 text-purple-500" />
+                  <span><strong>FlipCharge:</strong> Reverse player's charge </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Shield className="h-4 w-4 text-green-500" />
+                  <span><strong>Defend:</strong> Block attacks if player attacks, if player is charging then it takes half charging damage</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Heart className="h-4 w-4 text-red-500" />
+                  <span><strong>Recover:</strong> +10 health, still takes damage from player's attack</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Tagline */}
+          <div className="text-center">
+            <span className="inline-block bg-primary text-primary-foreground px-4 py-2 rounded-full font-bold text-lg">
+              🎮 Play well → Pay less
+            </span>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card className="w-full">
         <CardHeader>
@@ -189,13 +249,14 @@ export function ChatInterface() {
             <>
               <ScrollArea ref={scrollAreaRef} className="h-[400px] pr-4 sm:h-[720px]">
                 <div className="space-y-4">
+                  <GameStatusDisplay />
+                  
                   {messages.length === 0 && (
                     <div className="text-muted-foreground py-8 text-center">
                       <Bot className="mx-auto mb-2 h-12 w-12 opacity-50" />
                       <p>Start a conversation with the Shape assistant!</p>
                       <p className="mt-1 text-sm">
-                        Try asking about Shape Network data, how much gasback you can earn or
-                        analytics for a given collection.
+                        Ask the AI agent to start a new game or check your current game status.
                       </p>
                     </div>
                   )}
@@ -498,20 +559,29 @@ export function ChatInterface() {
 
 const SUGGESTED_PROMPTS = [
   {
-    title: 'Collection Analytics',
-    prompt: 'Give me data about the DeePle collection (0xf2e4b2a15872a20d0ffb336a89b94ba782ce9ba5)',
+    title: 'Start a new game',
+    prompt: 'Please start a new game for me',
   },
   {
-    title: 'Gasback Simulator',
-    prompt: 'How much gasback do I earn with 1000 tx / day for 6 months?',
+    title: 'Check otom that I have',
+    prompt: 'Please check if I have any otom in my wallet',
   },
   {
-    title: 'Shape Network Status & Information',
-    prompt: 'Get the current Shape Network status and RPC information',
+    title: 'Remind agent to move',
+    prompt: 'agent please make a move whatever you want',
   },
   {
-    title: 'Mint SVG NFT',
+    title: 'Remind agent to reveal move',
     prompt:
-      'Create an SVG NFT for me with a simple black circle design, name it "My First Shape NFT" and mint it to my wallet',
+      'agent please reveal your move',
+  },
+  {
+    title: 'claim refund and mint NFT',
+    prompt: 'please help me claim refund and mint NFT',
+  },
+  {
+    title: 'Make a move',
+    prompt: 'I want to attack with my second equipped otom',
   },
 ];
+
