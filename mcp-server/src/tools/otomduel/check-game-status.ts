@@ -348,7 +348,7 @@ export default async function checkGameStatus(params: InferSchema<typeof schema>
       success: true,
       hasActiveGame: true,
       gameId: gameId,
-      playerAddress,
+      playerAddress: playerAddress as `0x${string}`,
       chainId,
       explorerUrl: `https://sepolia.shapescan.xyz/address/${contractAddress}`,
       gameStatus: {

@@ -20,5 +20,5 @@ export const config = {
   defaultRpcUrl:
     Number(process.env.CHAIN_ID) === shape.id
       ? 'https://mainnet.shape.network'
-      : 'https://sepolia.shape.network',
+      : 'https://shape-sepolia.g.alchemy.com/v2/iypiZg6_DRa4Vg8UbGY4XTWRcrPuU6qe',
 } as const;

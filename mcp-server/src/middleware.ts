@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { type Middleware } from 'xmcp';
 import rateLimit from 'express-rate-limit';
 

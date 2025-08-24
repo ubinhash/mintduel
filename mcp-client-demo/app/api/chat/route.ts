@@ -20,6 +20,12 @@ export async function POST(req: Request) {
     tools,
     messages,
     maxSteps: 5,
+    onToolCall: ({ toolCallId, toolName, args }) => {
+      console.log('🔧 TOOL CALL:', { toolCallId, toolName, args });
+    },
+    onToolResult: ({ toolCallId, toolName, result }) => {
+      console.log('✅ TOOL RESULT:', { toolCallId, toolName, result: result.content?.[0]?.text?.substring(0, 100) + '...' });
+    },
     system: `You are a helpful assistant for the Otom Duel game. The user's connected wallet address is: ${walletAddress || 'Not connected'}
 
 ${walletAddress ? `IMPORTANT: The user's wallet is connected with address: ${walletAddress}. Use this address automatically for all game operations without asking for it.` : 'The user has not connected their wallet yet. Ask them to connect their wallet first.'}

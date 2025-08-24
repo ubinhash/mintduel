@@ -157,19 +157,37 @@ const otomDuelAbi = [
     ],
     stateMutability: "view",
     type: "function"
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "player",
+        type: "address"
+      }
+    ],
+    name: "playerActiveGame",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256"
+      }
+    ],
+    stateMutability: "view",
+    type: "function"
   }
 ] as const;
 
 export const schema = {
-  gameId: z.string().describe('The game ID to make a move for'),
   playerAddress: z.string().describe('The address of the player making the move'),
-  action: z.enum(['ATTACK', 'CHARGE']).describe('The player action to perform (ATTACK or CHARGE)'),
-  otomIndex: z.number().min(0).max(2).describe('The index of the OTOM to use (0, 1, or 2)'),
+  action: z.enum(['ATTACK', 'CHARGE']).default('ATTACK').describe('The player action to perform (ATTACK or CHARGE). Defaults to ATTACK if not specified.'),
+  otomIndex: z.number().min(0).max(2).default(0).describe('The index of the OTOM to use (0, 1, or 2). Defaults to 0 if not specified.'),
 };
 
 export const metadata = {
   name: 'preparePlayerMove',
-  description: 'Prepare a transaction for the player to make their move in an OtomDuel game',
+  description: 'Prepare a transaction for the player to make their move in an OtomDuel game. Game ID is automatically inferred from the player address.',
   inputSchema: schema,
   annotations: {
     title: 'Prepare Player Move',
@@ -179,6 +197,7 @@ export const metadata = {
     requiresWallet: true,
     category: 'otomduel',
     educationalHint: true,
+    chainableWith: ['preparePlayerMove'],
   },
 };
 
@@ -187,15 +206,21 @@ console.log('📦 TOOL LOADED: preparePlayerMove');
 
 export default async function preparePlayerMove(input: any) {
   console.log('🚀 TOOL CALLED: preparePlayerMove');
-  console.log('📥 Raw input:', input);
+  console.log('📥 Raw input:', JSON.stringify(input, null, 2));
   console.log('📥 Input type:', typeof input);
+  console.log('📥 Input keys:', Object.keys(input || {}));
   console.log('📅 Timestamp:', new Date().toISOString());
   
   try {
-    const { gameId, playerAddress, action, otomIndex } = input;
+    const { playerAddress, action, otomIndex } = input;
+    
+    console.log('🔍 Extracted parameters:');
+    console.log('  - playerAddress:', playerAddress, '(type:', typeof playerAddress, ')');
+    console.log('  - action:', action, '(type:', typeof action, ')');
+    console.log('  - otomIndex:', otomIndex, '(type:', typeof otomIndex, ')');
 
     console.log('=== Prepare Player Move Debug ===');
-    console.log('Input:', { gameId, playerAddress, action, otomIndex });
+    console.log('Input:', { playerAddress, action, otomIndex });
     console.log('Config:', { 
       chainId: config.chainId, 
       isMainnet: config.isMainnet,
@@ -206,13 +231,41 @@ export default async function preparePlayerMove(input: any) {
     const chain = config.isMainnet ? shape : shapeSepolia;
     const contractAddress = addresses.otomDuel[chain.id];
 
-    console.log('Chain:', chain.id, chain.name);
-    console.log('Contract Address:', contractAddress);
-
     const publicClient = createPublicClient({
       chain,
       transport: http(config.defaultRpcUrl),
     });
+
+    // Infer gameId from playerAddress
+    console.log('Inferring gameId from playerAddress...');
+    const gameId = await publicClient.readContract({
+      address: contractAddress as `0x${string}`,
+      abi: otomDuelAbi,
+      functionName: 'playerActiveGame',
+      args: [playerAddress as `0x${string}`],
+    });
+
+    console.log('Inferred gameId:', gameId.toString());
+
+    // Check if player has an active game
+    if (gameId === BigInt(0)) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({
+              error: true,
+              message: 'No active game found for this player',
+              playerAddress: playerAddress,
+              instructions: 'Start a new game first using prepareStartGame',
+            }),
+          },
+        ],
+      };
+    }
+
+    console.log('Chain:', chain.id, chain.name);
+    console.log('Contract Address:', contractAddress);
 
     console.log(`Prepare Player Move - Game ${gameId}, Player: ${playerAddress}, Action: ${action}, OTOM Index: ${otomIndex}`);
 
@@ -413,7 +466,7 @@ export default async function preparePlayerMove(input: any) {
         contractAddress: contractAddress,
         functionName: 'playerPlay',
         playerAddress: playerAddress,
-        gameId: gameId,
+        gameId: gameId.toString(),
         action: action,
         actionValue: actionValue,
         otomIndex: otomIndex,
@@ -484,7 +537,6 @@ export default async function preparePlayerMove(input: any) {
           text: JSON.stringify({
             error: true,
             message: `Error preparing player move: ${errorMessage}`,
-            gameId: input.gameId,
             playerAddress: input.playerAddress,
             action: input.action,
             otomIndex: input.otomIndex,
