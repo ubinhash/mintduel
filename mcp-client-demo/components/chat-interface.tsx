@@ -170,6 +170,9 @@ export function ChatInterface() {
             <p className="text-sm text-muted-foreground mb-3">
               Connect your wallet with Universe Alpha OTOM NFTs and start battling for mint discounts
             </p>
+            <p className="text-sm text-muted-foreground mb-3">
+              Stake & Equip OTOMs → Play 3 Rounds → Mint NFT & Claim Price Difference
+            </p>
             <p className="text-xs">
               <span className="text-red-500">100 health → Full price</span> | 
               <span className="text-yellow-500"> 30 health → 30% price</span> | 

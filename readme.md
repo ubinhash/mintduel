@@ -1,12 +1,14 @@
 # MintDuel ⚔️  
 *Agent-Driven Mint Pricing*  
 
+🔥 **MintDuel = Play well → Pay less**  
+
 ---
 
-## Prerequisite  
+## Prerequisites  
 
 - 🌐 Testnet: [https://testnet.otom.xyz/](https://testnet.otom.xyz/)  
-- ⛏️ **Requirement**: Mine 3 **Universe Alpha** OTOM on testnet  
+- ⛏️ **Requirement**: Mine 3 **Universe Alpha** OTOM on Shape Sepolia Testnet  
   - ⚠️ Make sure you are mining from **Alpha**, not **Bohr**!  
 
 ---
@@ -14,19 +16,24 @@
 ## Deployment  
 
 - 🚀 Live Demo: [https://mintduel-client.vercel.app/](https://mintduel-client.vercel.app/)  
+- 📺 Demo Video: [https://www.youtube.com/watch?v=xWOSCfwy1-c](https://www.youtube.com/watch?v=xWOSCfwy1-c)
 - 🌌 Network: Deployed on **Shape Sepolia**  
 
+---
+
 ## Overview  
+
 **MintDuel** introduces a new paradigm in NFT minting:  
 Your interaction with an AI agent directly determines your mint price.  
 
 - **Old Way**: Creators set fixed mint phases (e.g., WL = 0.01 ETH, Public = 0.02 ETH).  
-- **New Way**: Each user’s price is personalized through a duel with the Agent.  
+- **New Way**: Each user’s price is personalized through their interaction with the Agent.  
 
 ---
 
 ## Proof of Concept (OTOM Battle Demo)  
-Our proof-of-concept work for this hackathon is a **3-round, turn-based duel** between **User** and **Agent**.  
+
+For this hackathon, our proof-of-concept is a **3-round, turn-based duel** between **User** and **Agent**:  
 
 - **Starting Health**: Agent begins at 100 health.  
 - **Mint Price = Remaining Health**  
@@ -37,6 +44,7 @@ Our proof-of-concept work for this hackathon is a **3-round, turn-based duel** b
 ---
 
 ## Gameplay Flow  
+
 1. **Stake Full Mint Price**  
    - User stakes the full mint price upfront.  
    - After the duel, they **claim a refund** equal to their earned discount.  
@@ -48,7 +56,10 @@ Our proof-of-concept work for this hackathon is a **3-round, turn-based duel** b
 
 3. **Turns**  
    - Each round, **User and Agent commit moves on-chain, then reveal**.  
-   - User may also **bluff/chat** with the Agent to influence its choice.  
+   - User may also **bluff/chat** with the Agent to influence its choice. They may not may not listen to your suggested move.
+
+4. **Mint NFT and refund**
+   - User will be able to mint their nft and receive price difference by asking the agent at the end of the game.
 
 ---
 
@@ -74,12 +85,12 @@ The **AI Agent has its own wallet** and chooses one of three moves each round:
 | **FlipCharge** | Agent –OTOM health | Player –OTOM next attack (min 0) |
 | **Recover**   | Agent +10 health –OTOM health | Agent +10 health; Player +OTOM next attack |
 
-
-
 ---
 
 ## Future Expansion  
+
 The duel is just a starting point. Other agent-driven minting modes could include:  
+
 - 💬 **Conversation-based**: Negotiate/chat with the AI to set your price.  
 - 🧩 **Mini-games**: Puzzles, quizzes, prediction challenges.  
 - 🔄 **Adaptive Models**: Pricing adjusts to user history or skill.  
@@ -88,42 +99,36 @@ The duel is just a starting point. Other agent-driven minting modes could includ
 
 MintDuel demonstrates how **agent-driven minting enables fine-grained price discrimination**:  
 
-- 🎯 **Dynamic Pricing** → Price you pay reflects your engagement and strategy.  
-- 🕹️ **Fair & Fun** → Users who understand how to make reaction to craft **heavy OTOMs** and willing to observe agent behavior unlock **lower mint prices**, while more casual users still participate at a higher default price.  
-- 🤖 **Agent-Driven Transparency and Unpredictability** → The Agent commits moves on-chain with its own wallet, also adds a layer of luck to mint.
-- 🔒 **Secure Discounting** → Users always stake the full mint price but claim back their discount after the duel, guaranteeing both accessibility and security.  
+- 🎯 **Dynamic Pricing** → Price reflects engagement and strategy; no two users pay the same.  
+- 🕹️ **Fair & Fun** → Users who understand OTOMs and observe agent behavior unlock **lower mint prices**, while casual users still participate at a higher default price.  
+- 🤖 **Agent-Driven Transparency & Unpredictability** → The Agent commits moves on-chain with its own wallet, adding fairness and an element of luck.  
+- 🔒 **Secure Discounting** → Users stake the full mint price but claim back discounts after the duel, guaranteeing both accessibility and security.  
 
 This creates a spectrum of entry points—rewarding commitment and ecosystem knowledge while still driving revenue.  
 
+---
 
-# Libraries Used and Changes Made
+## Libraries Used and Changes Made  
 
-This project is built on top of the following starter templates:
+This project is built on top of the following starter templates:  
 
 - **mcp-server**: [shape-network/mcp-server](https://github.com/shape-network/mcp-server)  
-  - Changes were only made in `src/tools`  
-  - Added a new set of tools under the **`otom`** and **`duel`** folders  
-  - Unused tools are all removed
+  - Changes only in `src/tools`  
+  - Added new tools in **`otom`** and **`duel`** folders  
+  - Removed unused tools  
 
 - **mcp-client-demo**: [shape-network/mcp-client-demo](https://github.com/shape-network/mcp-client-demo)  
-  - Minimal changes were made to the demo UI due to time constraints  
-  - We've added a basic intro panel and a game status panel to the chat interface
+  - Minimal UI changes due to time constraints  
+  - Added an intro panel and a game status panel in the chat interface  
 
 ---
 
-# Security Notes
+## Security Notes  
 
 - **Commit Phase Secret**  
   - Currently using a hardcoded `"secret"` during the commit phase for the hackathon demo.  
-  - In production, this should be **randomly generated for each agent move** and **stored securely**.  
+  - In production, this should be **randomly generated per agent move** and stored securely.  
 
 - **User Verification**  
-  - When prompting an agent to move, we should require a **user signature**.  
-  - This ensures that only the authenticated player of a given game can make moves, preventing other users from interfering.  
-  - For this demo, the signature check is **not implemented**.  
-
-
-
-
-
-🔥 **MintDuel = Play well → Pay less**  
+  - In production, prompting the agent should require a **user signature** to ensure only valid players can influence their own game.  
+  - This check is **not implemented in the demo**.  
