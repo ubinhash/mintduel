@@ -12,7 +12,7 @@ async function main() {
   // otomToken = IERC1155(0xc709F59f1356230025d4fdFDCeD92341A14FF2F8);
   // otomDatabase =IOtomsDatabase(0xC6E01938846D3d62EafD7FF485afeE416f6D8A40);
 
-  const AGENT_ADDRESS = "0x48Dc4876472CbA3d91da6100a5B7fDeAAc062353"; // TODO: Replace with actual agent address
+  const AGENT_ADDRESS = "0xf06a6677DF224d9FCE3e502e4b89cB6bb307D1a1"; // TODO: Replace with actual agent address
   const OTOM_DATABASE_ADDRESS = "0xC6E01938846D3d62EafD7FF485afeE416f6D8A40"; // TODO: Replace with actual database address
   const OTOM_TOKEN_ADDRESS = "0xc709F59f1356230025d4fdFDCeD92341A14FF2F8"; // TODO: Replace with actual token address
   const SAMPLE_NFT_ADDRESS = config.SAMPLE_NFT_ADDRESS; // Get from config file

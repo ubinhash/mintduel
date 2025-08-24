@@ -15,7 +15,7 @@ export const addresses: Record<string, Record<number, Address>> = {
     [shape.id]: zeroAddress, // Replace with actual address when deployed to mainnet
   },
   otomDuel: {
-    [shapeSepolia.id]: '0x8fd35CDa6A713A3C3F983E3C62dc618563ebC3E9',
+    [shapeSepolia.id]: '0xC43Cf2fAc9813eBDd92123681b9dDD74De1D4d60',
     [shape.id]: zeroAddress, // Replace with actual address when deployed to mainnet
   },
   otom: {
