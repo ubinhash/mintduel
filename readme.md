@@ -3,15 +3,18 @@
 
 ---
 
-## Prerequisite 
-https://testnet.otom.xyz/
+## Prerequisite  
 
-mine three universe alpha otom on testnet, please make sure you are mining from alpha not bohr!
+- 🌐 Testnet: [https://testnet.otom.xyz/](https://testnet.otom.xyz/)  
+- ⛏️ **Requirement**: Mine 3 **Universe Alpha** OTOM on testnet  
+  - ⚠️ Make sure you are mining from **Alpha**, not **Bohr**!  
 
-## Deployment
+---
 
-https://mintduel-client.vercel.app/
+## Deployment  
 
+- 🚀 Live Demo: [https://mintduel-client.vercel.app/](https://mintduel-client.vercel.app/)  
+- 🌌 Network: Deployed on **Shape Sepolia**  
 
 ## Overview  
 **MintDuel** introduces a new paradigm in NFT minting:  
@@ -71,13 +74,7 @@ The **AI Agent has its own wallet** and chooses one of three moves each round:
 | **FlipCharge** | Agent –OTOM health | Player –OTOM next attack (min 0) |
 | **Recover**   | Agent +10 health –OTOM health | Agent +10 health; Player +OTOM next attack |
 
----
 
-## Why MintDuel?  
-- 🎯 **Dynamic Pricing** → No two users pay the same; price reflects engagement.  
-- 🕹️ **Fair & Fun** → Users who understand OTOMs and strategize effectively earn discounts.  
-- 🤖 **Agent-Driven** → The Agent commits on-chain with its own wallet, ensuring transparency.  
-- 🔒 **Trustless Claim** → Users always stake the full mint price and claim back their discount after the duel.  
 
 ---
 
@@ -87,25 +84,43 @@ The duel is just a starting point. Other agent-driven minting modes could includ
 - 🧩 **Mini-games**: Puzzles, quizzes, prediction challenges.  
 - 🔄 **Adaptive Models**: Pricing adjusts to user history or skill.  
 
+### Why This Matters  
+
+MintDuel demonstrates how **agent-driven minting enables fine-grained price discrimination**:  
+
+- 🎯 **Dynamic Pricing** → Price you pay reflects your engagement and strategy.  
+- 🕹️ **Fair & Fun** → Users who understand how to make reaction to craft **heavy OTOMs** and willing to observe agent behavior unlock **lower mint prices**, while more casual users still participate at a higher default price.  
+- 🤖 **Agent-Driven Transparency and Unpredictability** → The Agent commits moves on-chain with its own wallet, also adds a layer of luck to mint.
+- 🔒 **Secure Discounting** → Users always stake the full mint price but claim back their discount after the duel, guaranteeing both accessibility and security.  
+
+This creates a spectrum of entry points—rewarding commitment and ecosystem knowledge while still driving revenue.  
+
+
+# Libraries Used and Changes Made
+
+This project is built on top of the following starter templates:
+
+- **mcp-server**: [shape-network/mcp-server](https://github.com/shape-network/mcp-server)  
+  - Changes were only made in `src/tools`  
+  - Added a new set of tools under the **`otom`** and **`duel`** folders  
+  - Unused tools are all removed
+
+- **mcp-client-demo**: [shape-network/mcp-client-demo](https://github.com/shape-network/mcp-client-demo)  
+  - Minimal changes were made to the demo UI due to time constraints  
+  - We've added a basic intro panel and a game status panel to the chat interface
+
 ---
 
-## Library Used and Changed Made
+# Security Notes
 
-The project is build upon the following starter template/files. I haven't made much change to the client demo UI due to time constraint.
+- **Commit Phase Secret**  
+  - Currently using a hardcoded `"secret"` during the commit phase for the hackathon demo.  
+  - In production, this should be **randomly generated for each agent move** and **stored securely**.  
 
-mcp-server: https://github.com/shape-network/mcp-server
-    + changes are only made in src/tools, created a new set of tools in otom and duel folders.
-mcp-client-demo: https://github.com/shape-network/mcp-client-demo
-
-
-## Other technical details on Security
-
-We're using a hardcoded "secret" in the commit phase for the hackthon, it should be randomly generated each time agent commits a move and stored safely in prdocution.
-
-When use prompt agent to move we should've asked for a signature from a user to ensure the user is player in the particular game to avoid the player from influencing other player's game in production. Here we're not performing this check in this demo. 
-
-
-
+- **User Verification**  
+  - When prompting an agent to move, we should require a **user signature**.  
+  - This ensures that only the authenticated player of a given game can make moves, preventing other users from interfering.  
+  - For this demo, the signature check is **not implemented**.  
 
 
 

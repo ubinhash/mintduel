@@ -218,6 +218,34 @@ export function ChatInterface() {
               🎮 Play well → Pay less
             </span>
           </div>
+
+          {/* Created by */}
+          <div className="text-center pt-2 border-t border-border/50">
+            <p className="text-sm text-muted-foreground">
+              Created by: <span className="font-medium">@ubinhash</span>
+              {' • '}
+              <a 
+                href="https://x.com/ubinhash" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-primary hover:underline font-medium"
+              >
+                Twitter
+              </a>
+              {' • '}
+              <a 
+                href="https://github.com/ubinhash/mintduel" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-primary hover:underline font-medium"
+              >
+                GitHub
+              </a>
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              If you enjoy this project or have any feedback, give me a follow on Twitter and I'll follow you back! 
+            </p>
+          </div>
         </CardContent>
       </Card>
 
@@ -249,7 +277,9 @@ export function ChatInterface() {
             <>
               <ScrollArea ref={scrollAreaRef} className="h-[400px] pr-4 sm:h-[720px]">
                 <div className="space-y-4">
-                  <GameStatusDisplay />
+                  <div className="sticky top-0 z-10 bg-background pb-2">
+                    <GameStatusDisplay />
+                  </div>
                   
                   {messages.length === 0 && (
                     <div className="text-muted-foreground py-8 text-center">

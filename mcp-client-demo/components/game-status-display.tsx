@@ -256,9 +256,9 @@ export function GameStatusDisplay() {
 
   const getTurnDescription = (turnStatus: number) => {
     switch (turnStatus) {
-      case 0: return 'Agent needs to commit move';
-      case 1: return 'Player needs to make move';
-      case 2: return 'Agent needs to reveal move';
+      case 0: return 'Please prompt agent to commit move in chat';
+      case 1: return 'Your turn, please describe your move and otom you want to use in chat';
+      case 2: return 'Please prompt agent to reveal move in chat';
       default: return 'Unknown turn status';
     }
   };
@@ -356,6 +356,11 @@ export function GameStatusDisplay() {
                 <span className="font-semibold">{gameStatus.agentHealth}/100</span>
               </div>
               <Progress value={gameStatus.agentHealth} className="h-2" />
+              <div className="text-right">
+                <span className="text-xs text-muted-foreground">
+                  Mint discount: <span className="text-green-500 font-semibold">{100 - gameStatus.agentHealth}%</span>
+                </span>
+              </div>
             </div>
 
             {/* Accumulated Charge */}
@@ -370,10 +375,24 @@ export function GameStatusDisplay() {
             )}
 
             {/* Turn Status */}
-            <div className="bg-muted/50 rounded-lg p-3">
+            <div 
+              className={`bg-muted/50 rounded-lg p-3 ${gameStatus.turnStatus === 0 || gameStatus.turnStatus === 2 ? 'cursor-pointer hover:bg-muted/70 transition-colors' : ''}`}
+              onClick={() => {
+                if (gameStatus.turnStatus === 0) {
+                  // Copy agent commit prompt to clipboard
+                  navigator.clipboard.writeText('Agent, Please commit your move for this round');
+                } else if (gameStatus.turnStatus === 2) {
+                  // Copy agent reveal prompt to clipboard
+                  navigator.clipboard.writeText('Agent, Please reveal your move for this round');
+                }
+              }}
+            >
               <div className="flex items-center gap-2 text-sm">
                 <Clock className="h-4 w-4" />
                 <span className="font-medium">Current Turn:</span>
+                {(gameStatus.turnStatus === 0 || gameStatus.turnStatus === 2) && (
+                  <span className="text-xs text-blue-500">(Click to copy sample prompt)</span>
+                )}
               </div>
               <p className="text-sm text-muted-foreground mt-1">
                 {getTurnDescription(gameStatus.turnStatus)}
