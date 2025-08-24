@@ -204,3 +204,32 @@ export type PreparePlayerMoveData = {
     nextSteps: string[];
   };
 };
+
+export type PrepareClaimRefundData = {
+  success: boolean;
+  transaction: TransactionData;
+  metadata: {
+    contractAddress: string;
+    functionName: string;
+    playerAddress: string;
+    gameId: string;
+    refundAmount: number;
+    stakeAmount: number;
+    agentHealth: number;
+    estimatedGas: string;
+    chainId: number;
+    explorerUrl: string;
+  };
+  gameStatus: {
+    currentRound: number;
+    turnStatus: number;
+    agentHealth: number;
+    gameState: number;
+    stakeAmount: number;
+    refundAmount: number;
+    refundClaimed: boolean;
+  };
+  instructions: {
+    nextSteps: string[];
+  };
+};

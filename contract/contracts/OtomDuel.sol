@@ -6,11 +6,19 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "./interfaces/IOtomsDatabase.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+
+// Interface for SampleNFT contract
+interface ISampleNFT {
+    function mint(address to) external returns (uint256 tokenId);
+    function isOperator(address operator) external view returns (bool);
+}
 
 contract OtomDuel is ReentrancyGuard, Ownable, IERC1155Receiver {
 
     IOtomsDatabase public otomDatabase;
     IERC1155 public otomToken;
+    ISampleNFT public sampleNFT;
 
     // Game constants
     uint256 public constant STARTING_HEALTH = 100;
@@ -56,6 +64,7 @@ contract OtomDuel is ReentrancyGuard, Ownable, IERC1155Receiver {
     event GameCompleted(uint256 indexed gameId, uint256 finalAgentHealth, uint256 refundAmount);
     event RefundClaimed(uint256 indexed gameId, address indexed player, uint256 amount);
     event AgentWhitelisted(address indexed agent, bool whitelisted);
+    event NFTMinted(uint256 indexed gameId, address indexed player, uint256 tokenId);
 
     // State variables
     uint256 private _gameIds = 1;
@@ -117,6 +126,15 @@ contract OtomDuel is ReentrancyGuard, Ownable, IERC1155Receiver {
     function setOtomToken(address _otomToken) external onlyOwner {
         require(_otomToken != address(0), "Invalid token address");
         otomToken = IERC1155(_otomToken);
+    }
+
+    /**
+     * @dev Set the Sample NFT address (owner only)
+     * @param _sampleNFT Address of the Sample NFT ERC721 contract
+     */
+    function setSampleNFT(address _sampleNFT) external onlyOwner {
+        require(_sampleNFT != address(0), "Invalid NFT address");
+        sampleNFT = ISampleNFT(_sampleNFT);
     }
 
     /**
@@ -396,11 +414,29 @@ contract OtomDuel is ReentrancyGuard, Ownable, IERC1155Receiver {
         // Mark refund as claimed
         game.refundClaimed = true;
         
-        // Transfer refund to player
-        (bool success, ) = game.player.call{value: game.refundAmount}("");
+        // Mint NFT to player if SampleNFT contract is set
+        uint256 tokenId = 0;
+        uint256 finalRefundAmount = game.refundAmount;
+        
+        if (address(sampleNFT) != address(0)) {
+            try sampleNFT.mint(game.player) returns (uint256 mintedTokenId) {
+                tokenId = mintedTokenId;
+                emit NFTMinted(gameId, game.player, tokenId);
+            } catch {
+                // If minting fails, give full refund as compensation
+                finalRefundAmount = game.stakeAmount;
+                emit NFTMinted(gameId, game.player, 0);
+            }
+        }
+        
+        // Transfer refund to player (either partial or full based on NFT minting success)
+        (bool success, ) = game.player.call{value: finalRefundAmount}("");
         require(success, "Refund transfer failed");
         
-        emit RefundClaimed(gameId, game.player, game.refundAmount);
+        // Reset player's active game so they can start a new game
+        playerActiveGame[game.player] = 0;
+        
+        emit RefundClaimed(gameId, game.player, finalRefundAmount);
     }
 
     /**

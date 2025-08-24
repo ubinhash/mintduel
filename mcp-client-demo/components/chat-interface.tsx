@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
-import type { PrepareMintSVGNFTData, PrepareStartGameData, PreparePlayerMoveData } from '@/types';
+import type { PrepareMintSVGNFTData, PrepareStartGameData, PreparePlayerMoveData, PrepareClaimRefundData } from '@/types';
 import { useChat } from '@ai-sdk/react';
 import { Bot, ChevronDown, ChevronRight, Info, Send, User, Wallet } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -17,6 +17,7 @@ import { useAccount } from 'wagmi';
 import { MintTransactionHandler } from './mint-transaction-handler';
 import { StartGameTransactionHandler } from './start-game-transaction-handler';
 import { PlayerMoveTransactionHandler } from './player-move-transaction-handler';
+import { ClaimRefundTransactionHandler } from './claim-refund-transaction-handler';
 
 export function ChatInterface() {
   const { isConnected, address } = useAccount();
@@ -30,7 +31,7 @@ export function ChatInterface() {
 
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const [expandedMessages, setExpandedMessages] = useState<Set<string>>(new Set());
-  const [pendingTransaction, setPendingTransaction] = useState<PrepareMintSVGNFTData | PrepareStartGameData | PreparePlayerMoveData | null>(null);
+  const [pendingTransaction, setPendingTransaction] = useState<PrepareMintSVGNFTData | PrepareStartGameData | PreparePlayerMoveData | PrepareClaimRefundData | null>(null);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -55,7 +56,7 @@ export function ChatInterface() {
     for (const message of messages) {
       if (message.role === 'assistant') {
         // First check the message content
-        let transaction: PrepareMintSVGNFTData | PrepareStartGameData | PreparePlayerMoveData | null = detectTransactionResponse(message.content);
+        let transaction: PrepareMintSVGNFTData | PrepareStartGameData | PreparePlayerMoveData | PrepareClaimRefundData | null = detectTransactionResponse(message.content);
 
         // If not found in content, check tool results
         if (!transaction && message.parts) {
@@ -97,6 +98,14 @@ export function ChatInterface() {
                       transaction = parsed as PreparePlayerMoveData;
                       break;
                     }
+                    // Check for claim refund transaction
+                    if (
+                      part.toolInvocation.toolName === 'prepareClaimRefund' &&
+                      parsed.metadata.functionName === 'claimRefund'
+                    ) {
+                      transaction = parsed as PrepareClaimRefundData;
+                      break;
+                    }
                   }
                 }
               } catch {
@@ -126,7 +135,7 @@ export function ChatInterface() {
     });
   };
 
-  const detectTransactionResponse = (content: string): PrepareMintSVGNFTData | PrepareStartGameData | PreparePlayerMoveData | null => {
+  const detectTransactionResponse = (content: string): PrepareMintSVGNFTData | PrepareStartGameData | PreparePlayerMoveData | PrepareClaimRefundData | null => {
     try {
       const parsed = JSON.parse(content);
       if (parsed.success && parsed.transaction && parsed.metadata?.functionName) {
@@ -138,6 +147,12 @@ export function ChatInterface() {
         }
         if (parsed.metadata.functionName === 'playerPlay') {
           return parsed as PreparePlayerMoveData;
+        }
+        if (parsed.metadata.functionName === 'claimRefund') {
+          return parsed as PrepareClaimRefundData;
+        }
+        if (parsed.metadata.functionName === 'claimRefund') {
+          return parsed as PrepareClaimRefundData;
         }
       }
     } catch {
@@ -252,7 +267,7 @@ export function ChatInterface() {
 
                   {messages.map((message) => {
                     // Check if this message contains a transaction response
-                    let transaction: PrepareMintSVGNFTData | PrepareStartGameData | PreparePlayerMoveData | null = null;
+                    let transaction: PrepareMintSVGNFTData | PrepareStartGameData | PreparePlayerMoveData | PrepareClaimRefundData | null = null;
 
                     if (message.role === 'assistant') {
                       // First check the message content
@@ -430,6 +445,12 @@ export function ChatInterface() {
                       ) : pendingTransaction.metadata.functionName === 'startGame' ? (
                         <StartGameTransactionHandler
                           transaction={pendingTransaction as PrepareStartGameData}
+                          onComplete={handleTransactionComplete}
+                          onError={handleTransactionError}
+                        />
+                      ) : pendingTransaction.metadata.functionName === 'claimRefund' ? (
+                        <ClaimRefundTransactionHandler
+                          transaction={pendingTransaction as PrepareClaimRefundData}
                           onComplete={handleTransactionComplete}
                           onError={handleTransactionError}
                         />

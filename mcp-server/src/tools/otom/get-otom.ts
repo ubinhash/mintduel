@@ -6,6 +6,7 @@ import { alchemy } from '../../clients';
 import { config } from '../../config';
 import type { ToolErrorOutput } from '../../types';
 import { getCached, setCached } from '../../utils/cache';
+import { name2id } from './convert-otom-names';
 
 // Otom contract addresses
 const OTOM_CONTRACT_ADDRESSES = {
@@ -88,42 +89,63 @@ export default async function getOtom({ address }: InferSchema<typeof schema>) {
     const combinedNames: string[] = [];
     console.log(allOtomNfts);
 
-    for (const nft of allOtomNfts) {
+        for (const nft of allOtomNfts) {
+      let isInUniverseAlpha = false;
+      let hasProtons = false;
+
+      // Convert to string for comparison
+      const nftTokenIdString = String(nft.tokenId);
+      const name2idValues = Object.values(name2id).map(v => String(v));
+      const tokenIdInRecord = name2idValues.includes(nftTokenIdString);
+      console.log(tokenIdInRecord);
+      console.log(nftTokenIdString);
+
       // Check for Universe Alpha
       if (nft.raw?.metadata?.attributes) {
         const attributes = nft.raw.metadata.attributes as any[];
         
-        // Count Universe Alpha
+        // Check Universe Alpha from metadata OR token ID record
         const universeAttr = attributes.find(attr => attr.trait_type === 'Universe');
-        const isInUniverseAlpha = universeAttr && universeAttr.value === 'Alpha';
+        isInUniverseAlpha = (universeAttr && universeAttr.value === 'Alpha') || tokenIdInRecord;
         
-        if (isInUniverseAlpha) {
-          universeAlphaCount++;
-        }
-
-        // Count isotopes in Universe Alpha (have Protons attribute AND are in Universe Alpha)
+        // Check for Protons attribute OR token ID record
         const protonsAttr = attributes.find(attr => attr.trait_type === 'Protons');
-        if (protonsAttr && isInUniverseAlpha) {
-          isotopeInUniverseAlphaCount++;
-        }
+        hasProtons = !!protonsAttr || tokenIdInRecord;
 
-        // Create combined name from Name and Mass
-        const nameAttr = attributes.find(attr => attr.trait_type === 'Name');
-        const massAttr = attributes.find(attr => attr.trait_type === 'Mass');
-        
-        if (nameAttr && massAttr) {
-          const combinedName = `${nameAttr.value}-${massAttr.value}`;
-          combinedNames.push(combinedName);
-        } else if (nameAttr) {
-          // If only Name exists, use just the name
-          combinedNames.push(nameAttr.value);
-        } else {
-          // Fallback to token ID if no name
-          combinedNames.push(`Token-${nft.tokenId}`);
+        // Create combined name from Name and Mass (only if in Universe Alpha and has protons)
+        if (isInUniverseAlpha && hasProtons) {
+          const nameAttr = attributes.find(attr => attr.trait_type === 'Name');
+          const massAttr = attributes.find(attr => attr.trait_type === 'Mass');
+          
+          if (nameAttr && massAttr) {
+            const combinedName = `${nameAttr.value}-${massAttr.value}`;
+            combinedNames.push(combinedName);
+          } else if (nameAttr) {
+            // If only Name exists, use just the name
+            combinedNames.push(nameAttr.value);
+          } else {
+            // Fallback to token ID if no name
+            combinedNames.push(`Token-${nft.tokenId}`);
+          }
         }
       } else {
-        // Fallback to token ID if no metadata
-        combinedNames.push(`Token-${nft.tokenId}`);
+        // If no metadata, use token ID record validation
+        isInUniverseAlpha = tokenIdInRecord;
+        hasProtons = tokenIdInRecord;
+        
+        // Fallback to token ID if no metadata (only if in Universe Alpha and has protons)
+        if (isInUniverseAlpha && hasProtons) {
+          combinedNames.push(`Token-${nft.tokenId}`);
+        }
+      }
+
+      // Count based on validation results
+      if (isInUniverseAlpha) {
+        universeAlphaCount++;
+      }
+      
+      if (hasProtons && isInUniverseAlpha) {
+        isotopeInUniverseAlphaCount++;
       }
     }
 

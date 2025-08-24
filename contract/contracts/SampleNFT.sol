@@ -4,9 +4,12 @@ pragma solidity ^0.8.19;
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract MintDuelNFT is ERC721, Ownable {
+contract SampleNFT is ERC721, Ownable {
     // Replace Counters with manual increment
     uint256 private _tokenIds = 0;
+
+    // Base URI for token metadata
+    string private _baseTokenURI;
 
     // Operator management
     mapping(address => bool) public operators;
@@ -15,6 +18,7 @@ contract MintDuelNFT is ERC721, Ownable {
     event OperatorAdded(address indexed operator);
     event OperatorRemoved(address indexed operator);
     event NFTMinted(address indexed to, uint256 indexed tokenId);
+    event BaseURIUpdated(string indexed oldURI, string indexed newURI);
 
     // Modifiers
     modifier onlyOperator() {
@@ -22,7 +26,9 @@ contract MintDuelNFT is ERC721, Ownable {
         _;
     }
 
-    constructor() ERC721("Duel NFT", "DUEL") Ownable(msg.sender) {}
+    constructor() ERC721("Sample NFT", "SAMPLE") Ownable(msg.sender) {
+        _baseTokenURI = "https://your-metadata-api.com/metadata/";
+    }
 
     /**
      * @dev Add an operator who can mint NFTs
@@ -122,9 +128,27 @@ contract MintDuelNFT is ERC721, Ownable {
     }
 
     /**
-     * @dev Override _baseURI to return your base URI
+     * @dev Set the base URI for token metadata (only owner can call)
+     * @param newBaseURI New base URI for token metadata
      */
-    function _baseURI() internal pure override returns (string memory) {
-        return "https://your-metadata-api.com/metadata/";
+    function setBaseURI(string memory newBaseURI) external onlyOwner {
+        string memory oldURI = _baseTokenURI;
+        _baseTokenURI = newBaseURI;
+        emit BaseURIUpdated(oldURI, newBaseURI);
     }
-}
+
+    /**
+     * @dev Get the current base URI
+     * @return string Current base URI
+     */
+    function getBaseURI() external view returns (string memory) {
+        return _baseTokenURI;
+    }
+
+    /**
+     * @dev Override _baseURI to return the stored base URI
+     */
+    function _baseURI() internal view override returns (string memory) {
+        return _baseTokenURI;
+    }
+} 

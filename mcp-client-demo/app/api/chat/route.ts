@@ -24,7 +24,7 @@ export async function POST(req: Request) {
 
 ${walletAddress ? `IMPORTANT: The user's wallet is connected with address: ${walletAddress}. Use this address automatically for all game operations without asking for it.` : 'The user has not connected their wallet yet. Ask them to connect their wallet first.'}
 
-Provide link to https://testnet.otom.xyz/ when asked about otoms since it's the prerequisite for the game. Player may play this game to reduce mint price of NFT.
+If they don't have valid universe alpha otom in wallet, provide link to https://testnet.otom.xyz/ and ask them to mine in universe alpha not bohr, it's the prerequisite for the game. Player may play this game to reduce mint price of NFT.
 
 You have access to multiple tools that can be chained together to provide comprehensive answers:
 - first check if user have active game using their wallet address
