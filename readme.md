@@ -17,8 +17,19 @@
 
 - 🚀 Live Demo: [https://mintduel-client.vercel.app/](https://mintduel-client.vercel.app/)  
 - 📺 Demo Video: [https://www.youtube.com/watch?v=xWOSCfwy1-c](https://www.youtube.com/watch?v=xWOSCfwy1-c)
-- OTOM Duel Contract: [https://sepolia.shapescan.xyz/address/0xC43Cf2fAc9813eBDd92123681b9dDD74De1D4d60][0xC43Cf2fAc9813eBDd92123681b9dDD74De1D4d60]
 - 🌌 Network: Deployed on **Shape Sepolia**  
+
+### Other deployement details
+
+- **OTOM Duel Contract (Shape Sepolia):**  
+  `0xC43Cf2fAc9813eBDd92123681b9dDD74De1D4d60` — [View on Shapescan](https://sepolia.shapescan.xyz/address/0xC43Cf2fAc9813eBDd92123681b9dDD74De1D4d60)
+
+- **MCP Client (Server):**  
+  https://mintduel-mcp-server.vercel.app/
+
+- **Agent Wallet (unlikely but please fund it if it run out of shape sepolia):**  
+  `0xf06a6677DF224d9FCE3e502e4b89cB6bb307D1a1`
+  
 
 
 ---
@@ -52,9 +63,9 @@ For this hackathon, our proof-of-concept is a **3-round, turn-based duel** betwe
    - After the duel, they **claim a refund** equal to their earned discount.  
 
 2. **Equip OTOMs**  
-   - User selects OTOM tokens whose **atomic values add up to 100**.  
+   - User selects OTOM tokens whose **atomic mass values add up to 100**.  
    - Each round, the User must **play exactly one OTOM**.  
-   - OTOM value = attack strength.  
+   - OTOM mass value = attack strength.  
 
 3. **Turns**  
    - Each round, **agent commit secret move, user makes move, agent then reveal** and resulting health is calculated.  
@@ -68,7 +79,7 @@ For this hackathon, our proof-of-concept is a **3-round, turn-based duel** betwe
 ## Actions  
 
 ### User Options  
-- **Attack (OTOM)** → Deal damage = OTOM value.  
+- **Attack (OTOM)** → Deal damage = OTOM mass value.  
 - **Charge (OTOM)** → Boost next attack by OTOM value.  
 
 ### Agent Options  
@@ -107,6 +118,54 @@ MintDuel demonstrates how **agent-driven minting enables fine-grained price disc
 - 🔒 **Secure Discounting** → Users stake the full mint price but claim back discounts after the duel, guaranteeing both accessibility and security.  
 
 This creates a spectrum of entry points—rewarding commitment and ecosystem knowledge while still driving revenue.  
+
+---
+
+## Directory Structure
+
+This project consists of three main components:
+
+### **📱 Frontend Client** (`mcp-client-demo/`)
+- **Next.js** application with Web3 integration
+- **Features**: Chat interface, transaction handlers, game status display
+- **Environment Variables** (`.env`):
+  ```bash
+  OPENAI_API_KEY=your_openai_key
+  NEXT_PUBLIC_MCP_SERVER_URL=your_mcp_server_url
+  NEXT_PUBLIC_ALCHEMY_KEY=your_alchemy_key
+  NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID=your_wallet_connect_id
+  ```
+- **Run locally**: 
+  ```bash
+  cd mcp-client-demo
+  yarn install
+  yarn dev
+  ```
+
+### **🤖 MCP Server** (`mcp-server/`)
+- **Node.js** server implementing Model Context Protocol
+- **Features**: AI agent tools, blockchain interaction, game logic
+- **Environment Variables** (`.env`):
+  ```bash
+  ALCHEMY_API_KEY=your_alchemy_key
+  AGENT_PRIVATE_KEY=your_agent_private_key
+  AGENT_ADDRESS=your_agent_address
+  ```
+- **Run locally**:
+  ```bash
+  cd mcp-server
+  yarn install
+  yarn dev
+  ```
+
+### **📜 Smart Contracts** (`contract/`)
+- **Solidity** contracts for the OtomDuel game
+- **Features**: Game logic, NFT minting, refund system
+- **Deploy**:
+  ```bash
+  cd contract
+  npx hardhat run scripts/deploy_otomduel.js --network shapeSepolia
+  ```
 
 ---
 
