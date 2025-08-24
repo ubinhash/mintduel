@@ -17,7 +17,9 @@
 
 - 🚀 Live Demo: [https://mintduel-client.vercel.app/](https://mintduel-client.vercel.app/)  
 - 📺 Demo Video: [https://www.youtube.com/watch?v=xWOSCfwy1-c](https://www.youtube.com/watch?v=xWOSCfwy1-c)
+- OTOM Duel Contract: [https://sepolia.shapescan.xyz/address/0xC43Cf2fAc9813eBDd92123681b9dDD74De1D4d60][0xC43Cf2fAc9813eBDd92123681b9dDD74De1D4d60]
 - 🌌 Network: Deployed on **Shape Sepolia**  
+
 
 ---
 
@@ -55,7 +57,7 @@ For this hackathon, our proof-of-concept is a **3-round, turn-based duel** betwe
    - OTOM value = attack strength.  
 
 3. **Turns**  
-   - Each round, **User and Agent commit moves on-chain, then reveal**.  
+   - Each round, **agent commit secret move, user makes move, agent then reveal** and resulting health is calculated.  
    - User may also **bluff/chat** with the Agent to influence its choice. They may not may not listen to your suggested move.
 
 4. **Mint NFT and refund**
@@ -73,7 +75,7 @@ For this hackathon, our proof-of-concept is a **3-round, turn-based duel** betwe
 The **AI Agent has its own wallet** and chooses one of three moves each round:  
 - **FlipCharge** → If User is charging, reduce their next attack by charge value.  
 - **Defend** → Block an attack; if User didn’t attack, reduce User’s charging health by half.  
-- **Recover** → +10 health; if User is charging, also gain +User’s charge.  
+- **Recover** → +10 health. Will still suffer from attack.  
 
 ---
 
@@ -123,10 +125,10 @@ This project is built on top of the following starter templates:
 
 ---
 
-## Security Notes  
+## Security Notes  (Things we will fix later)
 
 - **Commit Phase Secret**  
-  - Currently using a hardcoded `"secret"` during the commit phase for the hackathon demo.  
+  - Currently using a hardcoded `"secret"` during the agent commit phase for the hackathon demo.  
   - In production, this should be **randomly generated per agent move** and stored securely.  
 
 - **User Verification**  
