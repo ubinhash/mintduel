@@ -69,11 +69,11 @@ export function ClaimRefundTransactionHandler({
 
   const getStatusMessage = () => {
     if (writeError) return 'Transaction failed';
-    if (isConfirmed) return 'Refund claimed successfully!';
-    if (isWaitingForReceipt) return 'Confirming refund claim...';
-    if (isSuccess) return 'Refund claim submitted!';
-    if (isPending) return 'Signing refund claim...';
-    return 'Ready to claim your refund';
+    if (isConfirmed) return 'Refund claimed and NFT minted successfully!';
+    if (isWaitingForReceipt) return 'Confirming refund claim and NFT mint...';
+    if (isSuccess) return 'Refund claim and NFT mint submitted!';
+    if (isPending) return 'Signing refund claim and NFT mint...';
+    return 'Ready to claim your mint price discount and mint NFT';
   };
 
   const getStatusIcon = () => {
@@ -110,10 +110,10 @@ export function ClaimRefundTransactionHandler({
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Wallet className="h-5 w-5" />
-          Claim Refund
-        </CardTitle>
+                     <CardTitle className="flex items-center gap-2">
+               <Wallet className="h-5 w-5" />
+               Claim Refund and Mint NFT
+             </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Status */}
@@ -198,17 +198,17 @@ export function ClaimRefundTransactionHandler({
             {isPending ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Signing Claim...
+                Signing Claim and Mint...
               </>
             ) : isWaitingForReceipt ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Claim Submitted!
+                Claim and Mint Submitted!
               </>
             ) : (
               <>
                 <Wallet className="mr-2 h-4 w-4" />
-                Claim Refund
+                Claim and Mint
               </>
             )}
           </Button>
@@ -220,7 +220,7 @@ export function ClaimRefundTransactionHandler({
             <Alert>
               <CheckCircle className="h-4 w-4" />
               <AlertDescription>
-                Refund claim submitted successfully! Waiting for confirmation...
+                Refund claim and NFT mint submitted successfully! Waiting for confirmation...
               </AlertDescription>
             </Alert>
             {transactionHash && (
@@ -242,7 +242,7 @@ export function ClaimRefundTransactionHandler({
           <Alert variant="destructive">
             <XCircle className="h-4 w-4" />
             <AlertDescription>
-              Failed to claim refund: {writeError.message}
+              Failed to claim refund and mint NFT: {writeError.message}
             </AlertDescription>
           </Alert>
         )}

@@ -135,7 +135,7 @@ export const schema = {
 
 export const metadata = {
   name: 'prepareClaimRefund',
-  description: 'Prepare a transaction to claim refund for a completed OtomDuel game. Game ID is automatically inferred from the player address.',
+  description: 'Display claim refund and mint NFT transaction for a completed OtomDuel game. Game ID is automatically inferred from the player address.',
   inputSchema: schema,
   annotations: {
     title: 'Prepare Claim Refund',
@@ -341,7 +341,7 @@ export default async function prepareClaimRefund(input: InferSchema<typeof schem
 
     const result = {
       success: true,
-      message: 'Claim refund transaction prepared successfully',
+      message: 'Claim refund and mint NFT transaction prepared successfully',
       transaction: {
         to: contractAddress,
         data: transactionData,
@@ -370,8 +370,10 @@ export default async function prepareClaimRefund(input: InferSchema<typeof schem
       },
       instructions: {
         nextSteps: [
-          'Send this transaction to claim your refund',
+          'Send this transaction to claim your refund and mint NFT',
           'The refund will be sent to your wallet address',
+          'An NFT will be minted to your wallet if minting succeeds',
+          'If NFT minting fails, you will receive a full refund as compensation',
           'Check the transaction on Shape Sepolia explorer',
         ],
       },

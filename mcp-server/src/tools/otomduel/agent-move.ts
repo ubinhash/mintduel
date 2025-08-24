@@ -181,6 +181,64 @@ const otomDuelAbi = [
     ],
     stateMutability: "view",
     type: "function"
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "gameId",
+        type: "uint256"
+      },
+      {
+        internalType: "uint256",
+        name: "round",
+        type: "uint256"
+      },
+      {
+        internalType: "enum OtomDuel.AgentAction",
+        name: "action",
+        type: "uint8"
+      },
+      {
+        internalType: "bytes32",
+        name: "secret",
+        type: "bytes32"
+      }
+    ],
+    name: "validReveal",
+    outputs: [
+      {
+        internalType: "bool",
+        name: "",
+        type: "bool"
+      }
+    ],
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "gameId",
+        type: "uint256"
+      },
+      {
+        internalType: "uint256",
+        name: "round",
+        type: "uint256"
+      }
+    ],
+    name: "getCommitHash",
+    outputs: [
+      {
+        internalType: "bytes32",
+        name: "",
+        type: "bytes32"
+      }
+    ],
+    stateMutability: "view",
+    type: "function"
   }
 ] as const;
 
@@ -374,6 +432,7 @@ export default async function agentMove(input: InferSchema<typeof schema>) {
 
     let transactionHash: string = '';
     let actionDescription: string = '';
+    let correctAction: string | null = null;
 
     if (moveType === 'COMMIT') {
       // Use fixed secret for testing
@@ -415,11 +474,49 @@ export default async function agentMove(input: InferSchema<typeof schema>) {
       console.log('Transaction confirmed!');
 
     } else if (moveType === 'REVEAL') {
-      // Use fixed secret for testing (same as commit)
+      // Use fixed secret for testing
       const moveSecret = '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
       
-      const actionValue = AGENT_ACTIONS[action];
-      console.log(`Revealing - Action: ${action} (${actionValue}), Secret: ${moveSecret}`);
+      // Find the correct action by enumerating all possibilities
+      console.log('Finding correct action for reveal...');
+      const actions = ['DEFEND', 'FLIP_CHARGE', 'RECOVER'] as const;
+      let correctAction: string | null = null;
+      
+      for (const testAction of actions) {
+        const actionValue = AGENT_ACTIONS[testAction as keyof typeof AGENT_ACTIONS];
+        const isValid = await publicClient.readContract({
+          address: contractAddress as `0x${string}`,
+          abi: otomDuelAbi,
+          functionName: 'validReveal',
+          args: [BigInt(gameId), BigInt(currentRound), actionValue, moveSecret as `0x${string}`],
+        });
+        
+        if (isValid) {
+          correctAction = testAction;
+          console.log(`Found correct action: ${correctAction}`);
+          break;
+        }
+      }
+      
+      if (!correctAction) {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                error: true,
+                message: 'Could not find valid action for reveal',
+                gameId: gameId.toString(),
+                currentRound: Number(currentRound),
+                instructions: 'Check if the secret matches the committed action',
+              }),
+            },
+          ],
+        };
+      }
+      
+      const actionValue = AGENT_ACTIONS[correctAction as keyof typeof AGENT_ACTIONS];
+      console.log(`Revealing - Action: ${correctAction} (${actionValue}), Secret: ${moveSecret}`);
 
       // Prepare transaction data
       const transactionData = encodeFunctionData({
@@ -435,7 +532,7 @@ export default async function agentMove(input: InferSchema<typeof schema>) {
       });
 
       transactionHash = hash;
-      actionDescription = `Revealed ${action} for round ${Number(currentRound)}`;
+      actionDescription = `Revealed ${correctAction} for round ${Number(currentRound)}`;
       
       // Wait for transaction confirmation
       console.log('Waiting for transaction confirmation...');
@@ -480,7 +577,7 @@ export default async function agentMove(input: InferSchema<typeof schema>) {
       chainId: chain.id,
       explorerUrl: `https://sepolia.shapescan.xyz/tx/${transactionHash}`,
       // Only include action in response for REVEAL operations
-      ...(moveType === 'REVEAL' && { action: action }),
+      ...(moveType === 'REVEAL' && { action: correctAction || action }),
       gameStatus: {
         before: {
           round: Number(round),

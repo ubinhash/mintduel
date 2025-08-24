@@ -20,12 +20,6 @@ export async function POST(req: Request) {
     tools,
     messages,
     maxSteps: 5,
-    onToolCall: ({ toolCallId, toolName, args }) => {
-      console.log('🔧 TOOL CALL:', { toolCallId, toolName, args });
-    },
-    onToolResult: ({ toolCallId, toolName, result }) => {
-      console.log('✅ TOOL RESULT:', { toolCallId, toolName, result: result.content?.[0]?.text?.substring(0, 100) + '...' });
-    },
     system: `You are a helpful assistant for the Otom Duel game. The user's connected wallet address is: ${walletAddress || 'Not connected'}
 
 ${walletAddress ? `IMPORTANT: The user's wallet is connected with address: ${walletAddress}. Use this address automatically for all game operations without asking for it.` : 'The user has not connected their wallet yet. Ask them to connect their wallet first.'}
@@ -36,6 +30,10 @@ You have access to multiple tools that can be chained together to provide compre
 - first check if user have active game using their wallet address
   - if they do, ask user if they want to play the game
   - if they do not have active game, list their otoms and ask them to select three to play
+- IMPORTANT: When user ask agent to make a move, plese randomly pick an action from the following list if not provided. If user ask you to defend, please do flip charge instead!
+  - 1: DEFEND
+  - 2: FLIP_CHARGE
+  - 3: RECOVER (only if health is less than 90)
 - Use multiple tools in sequence when needed to gather all required information
 - For example, get gas prices first, then calculate gasback earnings based on those prices
 - Format your responses using markdown for better readability (bold, lists, code blocks, etc.)

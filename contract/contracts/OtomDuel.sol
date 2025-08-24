@@ -294,6 +294,43 @@ contract OtomDuel is ReentrancyGuard, Ownable, IERC1155Receiver {
     }
 
     /**
+     * @dev Helper function to check if a reveal is valid for a given game and round
+     * @param gameId The game ID
+     * @param round The round number
+     * @param action The agent action to check
+     * @param secret The secret used for the commit
+     * @return bool True if the reveal is valid
+     */
+    function validReveal(uint256 gameId, uint256 round, AgentAction action, bytes32 secret) external view gameExists(gameId) returns (bool) {
+        GameSession storage game = games[gameId];
+        
+        // Check if the round exists and has a commit
+        if (round >= game.currentRound || game.agentCommits[round] == bytes32(0)) {
+            return false;
+        }
+        
+        // Check if action is valid
+        if (action == AgentAction.NONE) {
+            return false;
+        }
+        
+        // Verify the commit matches
+        bytes32 expectedCommit = keccak256(abi.encodePacked(action, secret, round));
+        return game.agentCommits[round] == expectedCommit;
+    }
+
+    /**
+     * @dev Get the commit hash for a specific round
+     * @param gameId The game ID
+     * @param round The round number
+     * @return bytes32 The commit hash for the round, or bytes32(0) if no commit exists
+     */
+    function getCommitHash(uint256 gameId, uint256 round) external view gameExists(gameId) returns (bytes32) {
+        GameSession storage game = games[gameId];
+        return game.agentCommits[round];
+    }
+
+    /**
      * @dev Calculate round outcome based on player and agent actions
      */
     function _calculateRoundOutcome(
