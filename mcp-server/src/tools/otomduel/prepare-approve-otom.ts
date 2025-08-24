@@ -148,7 +148,7 @@ export default async function prepareApproveOtom(params: InferSchema<typeof sche
       message: `Error preparing OTOM approval transaction: ${
         error instanceof Error ? error.message : 'Unknown error occurred'
       }`,
-      ownerAddress: params.playerAddress,
+      ownerAddress: params.playerAddress as Address,
       timestamp: new Date().toISOString(),
     };
 

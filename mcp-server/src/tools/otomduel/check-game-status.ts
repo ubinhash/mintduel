@@ -384,7 +384,7 @@ export default async function checkGameStatus(params: InferSchema<typeof schema>
       message: `Error checking game status: ${
         error instanceof Error ? error.message : 'Unknown error occurred'
       }`,
-      ownerAddress: params.playerAddress,
+      ownerAddress: params.playerAddress as Address,
       timestamp: new Date().toISOString(),
     };
 

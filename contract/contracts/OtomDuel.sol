@@ -359,8 +359,12 @@ contract OtomDuel is ReentrancyGuard, Ownable, IERC1155Receiver {
                 uint256 damageToAgent = otomMass / 2;
                 game.agentHealth = _subtractHealth(game.agentHealth, damageToAgent);
             } else if (agentAction == AgentAction.FLIP_CHARGE) {
-                // Reduce player's next attack by charge value (minimum 0)
-                // This is handled in the next attack
+                // Reduce accumulated charge by otomMass (minimum 0)
+                if (game.accumulatedCharge >= otomMass) {
+                    game.accumulatedCharge -= otomMass;
+                } else {
+                    game.accumulatedCharge = 0;
+                }
             } else if (agentAction == AgentAction.RECOVER) {
                 game.agentHealth = _addHealth(game.agentHealth, RECOVER_HEALTH_GAIN);
                 // Agent also gains the player's charge

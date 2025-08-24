@@ -151,7 +151,7 @@ export default async function prepareStartGame(params: InferSchema<typeof schema
       message: `Error preparing start game transaction: ${
         error instanceof Error ? error.message : 'Unknown error occurred'
       }`,
-      ownerAddress: params.playerAddress,
+      ownerAddress: params.playerAddress as Address,
       timestamp: new Date().toISOString(),
     };
 
