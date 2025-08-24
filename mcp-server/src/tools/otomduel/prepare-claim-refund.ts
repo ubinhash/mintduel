@@ -107,17 +107,35 @@ const otomDuelAbi = [
     ],
     stateMutability: "view",
     type: "function"
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "player",
+        type: "address"
+      }
+    ],
+    name: "playerActiveGame",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256"
+      }
+    ],
+    stateMutability: "view",
+    type: "function"
   }
 ] as const;
 
 export const schema = {
-  gameId: z.string().describe('The game ID to claim refund for'),
   playerAddress: z.string().describe('The address of the player claiming the refund'),
 };
 
 export const metadata = {
   name: 'prepareClaimRefund',
-  description: 'Prepare a transaction to claim refund for a completed OtomDuel game',
+  description: 'Prepare a transaction to claim refund for a completed OtomDuel game. Game ID is automatically inferred from the player address.',
   inputSchema: schema,
   annotations: {
     title: 'Prepare Claim Refund',
@@ -132,10 +150,10 @@ export const metadata = {
 
 export default async function prepareClaimRefund(input: InferSchema<typeof schema>) {
   try {
-    const { gameId, playerAddress } = input;
+    const { playerAddress } = input;
 
     console.log('=== Prepare Claim Refund Debug ===');
-    console.log('Input:', { gameId, playerAddress });
+    console.log('Input:', { playerAddress });
 
     // Create public client
     const chain = config.isMainnet ? shape : shapeSepolia;
@@ -149,7 +167,35 @@ export default async function prepareClaimRefund(input: InferSchema<typeof schem
       transport: http(config.defaultRpcUrl),
     });
 
-    console.log(`Prepare Claim Refund - Game ${gameId}, Player: ${playerAddress}`);
+    // Infer gameId from playerAddress
+    console.log('Inferring gameId from playerAddress...');
+    const gameId = await publicClient.readContract({
+      address: contractAddress as `0x${string}`,
+      abi: otomDuelAbi,
+      functionName: 'playerActiveGame',
+      args: [playerAddress as `0x${string}`],
+    });
+
+    console.log('Inferred gameId:', gameId.toString());
+
+    // Check if player has an active game
+    if (gameId === BigInt(0)) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({
+              error: true,
+              message: 'No active game found for this player',
+              playerAddress: playerAddress,
+              instructions: 'Player needs to have an active game to claim refund',
+            }),
+          },
+        ],
+      };
+    }
+
+    console.log(`Prepare Claim Refund - Game ${gameId.toString()}, Player: ${playerAddress}`);
 
     // Check game status and completion
     console.log('Calling whoseTurn...');
@@ -255,7 +301,7 @@ export default async function prepareClaimRefund(input: InferSchema<typeof schem
             text: JSON.stringify({
               error: true,
               message: 'No refund available to claim',
-              gameId: gameId,
+              gameId: gameId.toString(),
               agentHealth: Number(agentHealth),
               stakeAmount: Number(stakeAmount) / 1e18,
               instructions: 'Refund amount is 0 - no discount earned',
@@ -273,7 +319,7 @@ export default async function prepareClaimRefund(input: InferSchema<typeof schem
     });
 
     console.log('Transaction prepared:', {
-      gameId: gameId,
+      gameId: gameId.toString(),
       refundAmount: Number(refundAmount) / 1e18,
       transactionData: transactionData
     });
@@ -305,7 +351,7 @@ export default async function prepareClaimRefund(input: InferSchema<typeof schem
         contractAddress: contractAddress,
         functionName: 'claimRefund',
         playerAddress: playerAddress,
-        gameId: gameId,
+        gameId: gameId.toString(),
         refundAmount: Number(refundAmount) / 1e18,
         stakeAmount: Number(stakeAmount) / 1e18,
         agentHealth: Number(agentHealth),
@@ -368,7 +414,6 @@ export default async function prepareClaimRefund(input: InferSchema<typeof schem
           text: JSON.stringify({
             error: true,
             message: `Error preparing claim refund: ${errorMessage}`,
-            gameId: input.gameId,
             playerAddress: input.playerAddress,
             instructions: instructions,
             debug: {

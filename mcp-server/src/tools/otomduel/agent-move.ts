@@ -162,24 +162,40 @@ const otomDuelAbi = [
     ],
     stateMutability: "view",
     type: "function"
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "player",
+        type: "address"
+      }
+    ],
+    name: "playerActiveGame",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256"
+      }
+    ],
+    stateMutability: "view",
+    type: "function"
   }
 ] as const;
 
 export const schema = {
-  gameId: z
+  playerAddress: z
     .string()
-    .describe('The game ID to make a move for'),
+    .describe('The address of the player in the game'),
   action: z
     .enum(['DEFEND', 'FLIP_CHARGE', 'RECOVER'])
     .describe('The agent action to perform'),
-  moveType: z
-    .enum(['COMMIT', 'REVEAL'])
-    .describe('Whether to commit a new move or reveal a previous commit'),
 };
 
 export const metadata = {
   name: 'agentMove',
-  description: 'Make an agent move in an OtomDuel game (commit or reveal) using the agent wallet',
+  description: 'Make an agent move in an OtomDuel game (commit or reveal) using the agent wallet. Game ID is automatically inferred from the player address.',
   inputSchema: schema,
   annotations: {
     title: 'Agent Move',
@@ -194,7 +210,11 @@ export const metadata = {
 
 export default async function agentMove(input: InferSchema<typeof schema>) {
   try {
-    const { gameId, action, moveType } = input;
+    console.log('Agent Move - Input:', input);
+    const { playerAddress, action } = input;
+
+    console.log('Agent Move - Player Address:', playerAddress);
+    console.log('Agent Move - Action:', action);
 
     // Check if agent private key is available
     const agentPrivateKey = config.agentPrivateKey;
@@ -240,7 +260,35 @@ export default async function agentMove(input: InferSchema<typeof schema>) {
       transport: http(config.defaultRpcUrl),
     });
 
-    console.log(`Agent Move - Game ${gameId}, Action: ${action}, Type: ${moveType}`);
+    // Infer gameId from playerAddress
+    console.log('Inferring gameId from playerAddress...');
+    const gameId = await publicClient.readContract({
+      address: contractAddress as `0x${string}`,
+      abi: otomDuelAbi,
+      functionName: 'playerActiveGame',
+      args: [playerAddress as `0x${string}`],
+    });
+
+    console.log('Inferred gameId:', gameId.toString());
+
+    // Check if player has an active game
+    if (gameId === BigInt(0)) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({
+              error: true,
+              message: 'No active game found for this player',
+              playerAddress: playerAddress,
+              instructions: 'Player needs to start a game first',
+            }),
+          },
+        ],
+      };
+    }
+
+    console.log(`Agent Move - Game ${gameId.toString()}, Action: ${action}`);
     console.log(`Agent Address: ${agentAccount.address}`);
     console.log(`Contract Address: ${contractAddress}`);
 
@@ -278,40 +326,30 @@ export default async function agentMove(input: InferSchema<typeof schema>) {
 
     console.log(`Game Status - Round: ${round}, Turn Status: ${turnStatus}`);
 
-    // Validate turn
-    if (moveType === 'COMMIT' && turnStatus !== BigInt(0)) {
+    // Infer move type from game status
+    let moveType: 'COMMIT' | 'REVEAL';
+    if (turnStatus === BigInt(0)) {
+      moveType = 'COMMIT';
+    } else if (turnStatus === BigInt(2)) {
+      moveType = 'REVEAL';
+    } else {
       return {
         content: [
           {
             type: 'text',
             text: JSON.stringify({
               error: true,
-              message: 'Not agent\'s turn to commit',
+              message: 'Not agent\'s turn to make a move',
               currentRound: Number(round),
               turnStatus: Number(turnStatus),
-              instructions: 'Agent can only commit when turnStatus is 0 (agent needs to commit)',
+              instructions: 'Agent can only move when turnStatus is 0 (commit) or 2 (reveal)',
             }),
           },
         ],
       };
     }
 
-    if (moveType === 'REVEAL' && turnStatus !== BigInt(2)) {
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify({
-              error: true,
-              message: 'Not agent\'s turn to reveal',
-              currentRound: Number(round),
-              turnStatus: Number(turnStatus),
-              instructions: 'Agent can only reveal when turnStatus is 2 (agent needs to reveal)',
-            }),
-          },
-        ],
-      };
-    }
+    console.log(`Inferred move type: ${moveType}`);
 
     // Get game details for current round
     const [
@@ -370,6 +408,11 @@ export default async function agentMove(input: InferSchema<typeof schema>) {
 
       transactionHash = hash;
       actionDescription = `Committed move for round ${Number(currentRound)}`;
+      
+      // Wait for transaction confirmation
+      console.log('Waiting for transaction confirmation...');
+      await publicClient.waitForTransactionReceipt({ hash });
+      console.log('Transaction confirmed!');
 
     } else if (moveType === 'REVEAL') {
       // Use fixed secret for testing (same as commit)
@@ -393,6 +436,11 @@ export default async function agentMove(input: InferSchema<typeof schema>) {
 
       transactionHash = hash;
       actionDescription = `Revealed ${action} for round ${Number(currentRound)}`;
+      
+      // Wait for transaction confirmation
+      console.log('Waiting for transaction confirmation...');
+      await publicClient.waitForTransactionReceipt({ hash });
+      console.log('Transaction confirmed!');
     }
 
     // Get updated game status
@@ -424,7 +472,7 @@ export default async function agentMove(input: InferSchema<typeof schema>) {
     const result = {
       success: true,
       message: `Agent move executed successfully`,
-      gameId: gameId,
+      gameId: gameId.toString(),
       agentAddress: agentAccount.address,
       moveType: moveType,
       transactionHash: transactionHash,
@@ -450,8 +498,16 @@ export default async function agentMove(input: InferSchema<typeof schema>) {
         },
       },
       nextSteps: moveType === 'COMMIT' 
-        ? ['Player should call playerPlay() with their action and OTOM index']
-        : ['If game is not complete, agent should call agentPlay() for next round'],
+        ? [
+            'Agent move committed successfully!',
+            'Next: Player should call preparePlayerMove() with their action and OTOM index',
+            'Note: Wait a few seconds for blockchain confirmation before player move'
+          ]
+        : [
+            'Agent move revealed successfully!',
+            'Next: If game is not complete, agent should call agentMove() for next round',
+            'Note: Wait a few seconds for blockchain confirmation before next move'
+          ],
     };
 
     return {
@@ -473,10 +529,8 @@ export default async function agentMove(input: InferSchema<typeof schema>) {
           text: JSON.stringify({
             error: true,
             message: `Error executing agent move: ${error instanceof Error ? error.message : 'Unknown error'}`,
-            gameId: input.gameId,
-            moveType: input.moveType,
-            // Only include action in error response for REVEAL operations
-            ...(input.moveType === 'REVEAL' && { action: input.action }),
+            playerAddress: input.playerAddress,
+            action: input.action,
             instructions: 'Check game status and ensure it\'s the agent\'s turn',
           }),
         },
